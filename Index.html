@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Themed Productivity Checklist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Orbitron:wght@400;700&family=Roboto+Condensed:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles */
+        body {
+            transition: background-color 0.5s, color 0.5s;
+        }
+        :root {
+            --theme-transition: all 0.3s ease-in-out;
+        }
+
+        /* Themes */
+        .theme-classic { --bg-primary: #FFFFFF; --bg-secondary: #F3F4F6; --text-primary: #1F2937; --text-secondary: #4B5563; --accent-primary: #3B82F6; --accent-secondary: #10B981; --border-color: #D1D5DB; font-family: 'VT323', monospace; }
+        .theme-wonder-woman { --bg-primary: #0A192F; --bg-secondary: #172A45; --text-primary: #CCD6F6; --text-secondary: #8892B0; --accent-primary: #F59E0B; --accent-secondary: #DC2626; --border-color: #233554; font-family: 'Cinzel', serif; }
+        .theme-iron-man { --bg-primary: #111827; --bg-secondary: #1F2937; --text-primary: #E5E7EB; --text-secondary: #9CA3AF; --accent-primary: #06B6D4; --accent-secondary: #EF4444; --border-color: #374151; font-family: 'Orbitron', sans-serif; }
+        .theme-batman { --bg-primary: #000000; --bg-secondary: #171717; --text-primary: #F5F5F5; --text-secondary: #A3A3A3; --accent-primary: #FDE047; --accent-secondary: #6B7280; --border-color: #404040; font-family: 'Roboto Condensed', sans-serif; }
+
+        /* Dynamic styles */
+        .bg-primary { background-color: var(--bg-primary); transition: var(--theme-transition); }
+        .bg-secondary { background-color: var(--bg-secondary); transition: var(--theme-transition); }
+        .text-primary { color: var(--text-primary); transition: var(--theme-transition); }
+        .text-secondary { color: var(--text-secondary); transition: var(--theme-transition); }
+        .accent-primary { color: var(--accent-primary); transition: var(--theme-transition); }
+        .accent-secondary { color: var(--accent-secondary); transition: var(--theme-transition); }
+        .border-theme { border-color: var(--border-color); transition: var(--theme-transition); }
+        .btn-theme-primary { background-color: var(--accent-primary); color: var(--bg-primary); transition: var(--theme-transition); }
+        .btn-theme-secondary { background-color: var(--accent-secondary); color: var(--bg-primary); transition: var(--theme-transition); }
+        .hover-bg-primary:hover { background-color: var(--bg-primary); }
+        .hover-accent-primary:hover { color: var(--accent-primary); }
+
+        .checklist-item { border-left: 2px solid var(--border-color); padding-left: 1rem; margin-top: 0.5rem; transition: var(--theme-transition); }
+        .collapsible-icon { transition: transform 0.3s; }
+        .collapsed .collapsible-icon { transform: rotate(-90deg); }
+        .collapsed .children-container { display: none; }
+        .topic-checkbox:checked ~ .item-title, .subtopic-checkbox:checked ~ .item-title { text-decoration: line-through; color: var(--text-secondary); }
+        
+        /* Calendar Heatmap */
+        .heatmap-0 { background-color: transparent; }
+        .heatmap-1 { background-color: var(--accent-secondary); opacity: 0.4; }
+        .heatmap-2 { background-color: var(--accent-secondary); opacity: 0.6; }
+        .heatmap-3 { background-color: var(--accent-secondary); opacity: 0.8; }
+        .heatmap-4 { background-color: var(--accent-secondary); opacity: 1; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes celebration { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .celebrate { animation: celebration 0.8s ease-in-out; }
+        
+        .aspect-w-16 { position: relative; padding-bottom: 56.25%; }
+        .aspect-h-9 { height: 0; }
+        .aspect-w-16 > * { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+    </style>
+</head>
+<body class="bg-primary text-primary">
+
+    <!-- Auth Container -->
+    <div id="auth-container" class="h-screen flex items-center justify-center">
+        <div class="text-center p-8 bg-secondary rounded-lg shadow-xl">
+            <h1 class="text-4xl font-bold accent-primary mb-4">Productivity Hub</h1>
+            <p class="text-lg text-secondary mb-8">Please log in to continue</p>
+            <button id="login-btn" class="btn-theme-primary font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105 flex items-center mx-auto">
+                <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#34A853" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#FBBC05" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#EA4335" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.252 4.138-4.396 5.587l6.19 5.238C42.012 36.417 44 30.836 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                Login with Google
+            </button>
+        </div>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div id="loading-container" class="hidden h-screen flex items-center justify-center">
+        <p class="text-2xl text-secondary animate-pulse">Loading your data...</p>
+    </div>
+
+    <!-- App Container (now hidden by default) -->
+    <div id="app-container" class="hidden max-w-7xl mx-auto p-4">
+        
+        <header class="flex flex-wrap justify-between items-center mb-6 pb-4 border-b border-theme">
+            <div class="flex items-center gap-4">
+                <h1 id="main-title" class="text-4xl font-bold accent-primary cursor-pointer" contenteditable="true">Productivity Hub</h1>
+                <span id="save-indicator" class="text-sm text-secondary transition-opacity duration-500 opacity-0">✓ Saved</span>
+            </div>
+            <div id="user-info" class="hidden items-center space-x-4">
+                <span class="text-secondary">Welcome, <span id="user-name" class="font-bold text-primary"></span>!</span>
+                <button id="logout-btn" class="btn-theme-secondary p-2 rounded-md">Logout</button>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="./focus.html" target="_blank" id="focus-header-btn" class="btn-theme-primary p-2 rounded-md">Focus</a>
+                <div id="theme-switcher" class="flex items-center space-x-2">
+                    <button data-theme="classic" class="theme-btn p-2 rounded-full bg-blue-500 border-2 border-transparent" title="Classic"></button>
+                    <button data-theme="wonder-woman" class="theme-btn p-2 rounded-full bg-yellow-500 border-2 border-transparent" title="Wonder Woman"></button>
+                    <button data-theme="iron-man" class="theme-btn p-2 rounded-full bg-cyan-400 border-2 border-transparent" title="Iron Man"></button>
+                    <button data-theme="batman" class="theme-btn p-2 rounded-full bg-yellow-400 border-2 border-transparent" title="Batman"></button>
+                </div>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Tools -->
+                <div class="bg-secondary p-4 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-2 text-primary">Stopwatch</h2>
+                    <div id="stopwatch-display" class="text-5xl font-mono text-center accent-primary mb-4 cursor-pointer">00:00:00</div>
+                    <p class="text-center text-secondary text-sm">Single tap: start/stop. Double tap: reset.</p>
+                </div>
+
+                <div class="bg-secondary p-4 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-2 text-primary">Focus Sessions</h2>
+                    <div class="flex flex-col space-y-2">
+                        <button id="focus-25" class="btn-theme-primary p-2 rounded-md">Start 25 Min Focus</button>
+                        <button id="focus-50" class="btn-theme-secondary p-2 rounded-md">Start 50 Min Focus</button>
+                    </div>
+                </div>
+
+                <div class="bg-secondary p-4 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-2 text-primary">Productivity Calendar</h2>
+                    <div class="flex justify-between items-center mb-2">
+                        <button id="prev-month" class="p-2 hover-accent-primary">&lt;</button>
+                        <h3 id="calendar-month-year" class="font-bold"></h3>
+                        <button id="next-month" class="p-2 hover-accent-primary">&gt;</button>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center"></div>
+                </div>
+
+                 <div class="bg-secondary p-4 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-2 text-primary">Achievements</h2>
+                    <div id="achievement-badge" class="w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110">
+                        <span id="badge-level">0</span>
+                    </div>
+                    <p id="main-quote" class="text-center text-secondary italic" contenteditable="true">"The secret of getting ahead is getting started."</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-secondary p-4 rounded-lg shadow-md">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                    <h2 class="text-3xl font-bold text-primary">Checklist</h2>
+                    <div class="flex gap-2">
+                        <button id="bulk-add-btn" class="btn-theme-secondary p-2 rounded-md">Bulk Add</button>
+                        <button id="add-subject-btn" class="btn-theme-primary p-2 rounded-md">Add Subject</button>
+                    </div>
+                </div>
+                 <div class="mb-4">
+                    <input type="text" id="search-bar" class="w-full p-2 rounded-md bg-primary text-primary border border-theme" placeholder="Search tasks...">
+                </div>
+                <div id="checklist-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="focus-mode-overlay" class="hidden fixed inset-0 flex-col items-center justify-center z-50 transition-colors duration-500">
+        <div id="focus-timer" class="text-8xl md:text-9xl font-bold text-white"></div>
+        <button id="end-focus-session" class="mt-8 text-white border border-white px-6 py-2 rounded-lg hover:bg-white hover:text-black transition-colors">End Session</button>
+    </div>
+    <div id="quote-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50 p-4">
+        <div class="bg-secondary p-6 rounded-lg max-w-2xl w-full max-h-full overflow-y-auto modal">
+            <h2 class="text-2xl font-bold mb-4 text-primary">Unlocked Quotes</h2>
+            <div id="quote-list"></div>
+            <button id="close-quote-modal" class="mt-4 btn-theme-secondary p-2 rounded-md">Close</button>
+        </div>
+    </div>
+    <div id="calendar-note-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50 p-4">
+        <div class="bg-secondary p-6 rounded-lg max-w-md w-full modal">
+            <h2 class="text-2xl font-bold mb-4 text-primary" id="calendar-note-title"></h2>
+            <textarea id="calendar-note-input" class="w-full p-2 rounded-md bg-primary text-primary border border-theme" rows="4" placeholder="Add a note..."></textarea>
+            <div class="flex justify-between items-center mt-4">
+                <button id="save-calendar-note" class="btn-theme-primary p-2 rounded-md">Save</button>
+                <button id="delete-calendar-note" class="btn-theme-secondary p-2 rounded-md">Delete</button>
+                <button id="close-calendar-note-modal" class="p-2 rounded-md">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div id="notes-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50 p-4">
+        <div class="bg-secondary p-6 rounded-lg max-w-2xl w-full max-h-full flex flex-col modal">
+            <h2 class="text-2xl font-bold mb-4 text-primary">Notes & Attachments</h2>
+            <div class="flex-grow overflow-y-auto">
+                <textarea id="item-note-text" class="w-full p-2 rounded-md bg-primary text-primary border border-theme mb-4" rows="5" placeholder="Type your notes here..."></textarea>
+                <div id="attachments-container" class="space-y-2"></div>
+            </div>
+            <div class="flex-shrink-0 flex flex-wrap gap-2 mt-4">
+                <input type="text" id="attachment-input" class="flex-grow p-2 rounded-md bg-primary text-primary border border-theme" placeholder="Paste Web or YouTube URL">
+                <button id="add-link-btn" class="btn-theme-primary p-2 rounded-md">Add Link</button>
+            </div>
+             <button id="close-notes-modal" class="mt-4 p-2 rounded-md">Close</button>
+        </div>
+    </div>
+    <div id="youtube-player-modal" class="hidden fixed inset-0 bg-black bg-opacity-90 items-center justify-center z-50 p-4">
+        <div class="relative w-full max-w-4xl">
+            <button id="close-youtube-modal" class="absolute -top-8 right-0 text-white text-2xl">&times;</button>
+            <div id="youtube-player-container" class="aspect-w-16 aspect-h-9"></div>
+        </div>
+    </div>
+    <div id="bulk-add-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50 p-4">
+        <div class="bg-secondary p-6 rounded-lg max-w-2xl w-full modal">
+            <h2 class="text-2xl font-bold mb-4 text-primary">Bulk Add From Text</h2>
+            <p class="text-sm text-secondary mb-2">Use format: `Subject: Name`, `Section: Name`, etc. Indent with spaces for hierarchy.</p>
+            <textarea id="bulk-add-input" class="w-full p-2 rounded-md bg-primary text-primary border border-theme" rows="10" placeholder="Subject: My Project\n  Section: Research\n    Topic: Competitors\n      Subtopic: Analyze competitor A"></textarea>
+            <div class="flex justify-between mt-4">
+                <button id="process-bulk-add" class="btn-theme-primary p-2 rounded-md">Add to Checklist</button>
+                <button id="close-bulk-add-modal" class="p-2 rounded-md">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div id="level-up-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-50 p-4">
+        <div class="bg-secondary p-8 rounded-lg text-center modal">
+            <h2 class="text-4xl font-bold accent-primary mb-4">LEVEL UP!</h2>
+            <p class="text-xl text-primary mb-2">You've reached Level <span id="new-level-display"></span>!</p>
+            <p class="text-lg text-secondary">A new quote has been unlocked.</p>
+            <button id="close-level-up-modal" class="mt-6 btn-theme-primary p-2 rounded-md">Awesome!</button>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+
+        // Your web app's Firebase configuration with the corrected keys
+        const firebaseConfig = {
+            apiKey: "AIzaSyAupZMTnCqwyz7WEGcA8pJS1r0nnYA6bMk",
+            authDomain: "checkmeout-b57f2.firebaseapp.com",
+            projectId: "checkmeout-b57f2",
+            storageBucket: "checkmeout-b57f2.appspot.com",
+            messagingSenderId: "199208936999",
+            appId: "1:199208936999:web:56db3d05695e158d0bd002",
+            measurementId: "G-S6T4G00G7F"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        const analytics = getAnalytics(app);
+
+        // --- Main App Logic ---
+        function mainAppLogic(db, auth) {
+            document.addEventListener('DOMContentLoaded', () => {
+                // Firebase related state
+                let currentUser = null;
+                let unsubscribeFromFirestore = null;
+                let isInitialLoad = true;
+
+                // DOM Elements for Auth
+                const authContainer = document.getElementById('auth-container');
+                const loadingContainer = document.getElementById('loading-container');
+                const appContainer = document.getElementById('app-container');
+                const loginBtn = document.getElementById('login-btn');
+                const logoutBtn = document.getElementById('logout-btn');
+                const userInfoDiv = document.getElementById('user-info');
+                const userNameSpan = document.getElementById('user-name');
+
+                // STATE MANAGEMENT
+                let state;
+                let currentEditingIndices = null; 
+                let currentCalendarDate = null; 
+                let stopwatchInterval = null; 
+
+                const defaultState = {
+                    mainTitle: 'Productivity Hub',
+                    currentTheme: 'classic',
+                    checklists: { classic: [], 'wonder-woman': [], 'iron-man': [], batman: [] },
+                    stopwatch: { startTime: 0, elapsedTime: 0, isRunning: false },
+                    calendar: { date: new Date().toISOString(), bookmarks: {} },
+                    achievements: {
+                        classic: { level: 0, mainQuote: "The future depends on what you do today." },
+                        'wonder-woman': { level: 0, mainQuote: "If no one else will defend the world, then I must." },
+                        'iron-man': { level: 0, mainQuote: "I am Iron Man." },
+                        batman: { level: 0, mainQuote: "It's not who I am underneath, but what I do that defines me." }
+                    },
+                };
+
+                const quotes = {
+                    classic: ["The future depends on what you do today.", "Well done is better than well said.", "The secret of getting ahead is getting started.", "A year from now you may wish you had started today.", "The best way to predict the future is to create it."],
+                    'wonder-woman': ["If no one else will defend the world, then I must.", "It's about what you believe. And I believe in love.", "What one does when faced with the truth is more difficult than you'd think.", "I will fight for those who cannot fight for themselves.", "Peace is a virtue. A state of mind, a disposition for benevolence, confidence and justice."],
+                    'iron-man': ["I am Iron Man.", "Sometimes you gotta run before you can walk.", "The truth is... I am Iron Man.", "I build neat stuff, got a great girl, occasionally save the world. So why can't I sleep?", "Heroes are made by the paths they choose, not the powers they are graced with."],
+                    batman: ["It's not who I am underneath, but what I do that defines me.", "I'm Batman.", "All men have limits. They learn what they are and learn not to exceed them. I ignore mine.", "A hero can be anyone.", "Why do we fall? So that we can learn to pick ourselves up."]
+                };
+
+                // Firebase Auth Listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = user;
+                        authContainer.style.display = 'none';
+                        loadingContainer.classList.replace('hidden', 'flex');
+                        appContainer.classList.add('hidden');
+                        
+                        const userDocRef = doc(db, "user_data", user.uid);
+                        if (unsubscribeFromFirestore) unsubscribeFromFirestore();
+
+                        unsubscribeFromFirestore = onSnapshot(userDocRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const savedState = docSnap.data();
+                                state = { 
+                                    ...defaultState, 
+                                    ...savedState,
+                                    achievements: { ...defaultState.achievements, ...savedState.achievements },
+                                    checklists: { ...defaultState.checklists, ...savedState.checklists },
+                                    calendar: { ...defaultState.calendar, ...savedState.calendar },
+                                    stopwatch: { ...defaultState.stopwatch, ...savedState.stopwatch }
+                                };
+                            } else {
+                                state = { ...defaultState };
+                                saveState();
+                            }
+
+                            if (isInitialLoad) {
+                                initAppUI();
+                                isInitialLoad = false;
+                            } else {
+                                applyTheme(state.currentTheme, false);
+                            }
+
+                            loadingContainer.classList.replace('flex', 'hidden');
+                            appContainer.classList.remove('hidden');
+                            userInfoDiv.classList.remove('hidden');
+                            userNameSpan.textContent = user.displayName;
+                        });
+
+                    } else {
+                        currentUser = null;
+                        if (unsubscribeFromFirestore) unsubscribeFromFirestore();
+                        
+                        authContainer.style.display = 'flex';
+                        loadingContainer.classList.replace('flex', 'hidden');
+                        appContainer.classList.add('hidden');
+                        userInfoDiv.classList.add('hidden');
+                        isInitialLoad = true;
+                    }
+                });
+
+                // Login/Logout button handlers
+                loginBtn.addEventListener('click', () => {
+                    signInWithPopup(auth, provider).catch(error => console.error("Login failed:", error));
+                });
+
+                logoutBtn.addEventListener('click', () => {
+                    signOut(auth).catch(error => console.error("Logout failed:", error));
+                });
+                
+                // Save state to Firestore
+                async function saveState() {
+                    if (!currentUser || !state) return;
+                    try {
+                        const userDocRef = doc(db, "user_data", currentUser.uid);
+                        await setDoc(userDocRef, state); 
+                        
+                        const indicator = document.getElementById('save-indicator');
+                        indicator.classList.remove('opacity-0');
+                        setTimeout(() => indicator.classList.add('opacity-0'), 1500);
+                    } catch (e) {
+                        console.error("Error saving state to Firestore:", e);
+                        alert("Could not save data. Check console.");
+                    }
+                }
+
+                // THEME
+                function applyTheme(theme, doSave = true) {
+                    state.currentTheme = theme;
+                    document.body.className = `theme-${theme} bg-primary text-primary`;
+                    document.querySelectorAll('#theme-switcher .theme-btn').forEach(btn => {
+                        btn.style.borderColor = btn.dataset.theme === theme ? 'var(--accent-primary)' : 'transparent';
+                    });
+                    document.getElementById('main-title').textContent = state.mainTitle;
+                    updateBadge();
+                    renderCalendar();
+                    renderChecklist();
+                    if (doSave) saveState();
+                }
+                
+                // CHECKLIST LOGIC
+                function renderChecklist(searchTerm = '') {
+                    const currentChecklist = state.checklists[state.currentTheme] || [];
+                    const checklistContainer = document.getElementById('checklist-container');
+                    checklistContainer.innerHTML = '';
+                    if (currentChecklist.length === 0 && !searchTerm) {
+                        checklistContainer.innerHTML = `<p class="text-secondary">No subjects yet.</p>`;
+                        return;
+                    }
+                    const filteredChecklist = searchTerm ? filterChecklist(currentChecklist, searchTerm.toLowerCase()) : currentChecklist;
+                    filteredChecklist.forEach((subject, subjectIndex) => {
+                        const subjectEl = createChecklistItem(subject, [subjectIndex], 'subject', searchTerm);
+                        checklistContainer.appendChild(subjectEl);
+                    });
+                }
+
+                function createChecklistItem(item, indices, type, searchTerm) {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = `checklist-item ${item.collapsed && !searchTerm ? 'collapsed' : ''}`;
+                    itemEl.dataset.type = type;
+                    itemEl.dataset.indices = indices.join(',');
+
+                    let topicCheckboxState = '';
+                    if (type === 'topic') {
+                        const subtopics = item.children || [];
+                        if (subtopics.length > 0) {
+                            const completedCount = subtopics.filter(st => st.completed).length;
+                            if (completedCount === 0) topicCheckboxState = '';
+                            else if (completedCount === subtopics.length) topicCheckboxState = 'checked';
+                            else topicCheckboxState = 'indeterminate';
+                        }
+                    }
+
+                    const childrenContainer = type !== 'subtopic' ? `<div class="children-container"></div>` : '';
+                    const checkboxHTML = {
+                        topic: `<input type="checkbox" class="topic-checkbox mr-2" ${topicCheckboxState === 'checked' ? 'checked' : ''}>`,
+                        subtopic: `<input type="checkbox" class="subtopic-checkbox mr-2" ${item.completed ? 'checked' : ''}>`
+                    }[type] || '';
+                    
+                    itemEl.innerHTML = `
+                        <div class="flex items-center justify-between p-2 rounded-md hover-bg-primary">
+                            <div class="flex items-center flex-grow min-w-0">
+                                ${type !== 'subtopic' ? `<span class="collapsible-icon mr-2 cursor-pointer text-secondary">▼</span>` : ''}
+                                ${checkboxHTML}
+                                <span class="item-title text-primary cursor-pointer truncate">${item.title}</span>
+                                <input type="text" class="item-edit-input hidden w-full bg-primary text-primary border-b border-theme" value="${item.title}">
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                                <button class="notes-btn text-secondary hover-accent-primary text-lg">📝</button>
+                                ${type !== 'subtopic' ? `<button class="add-child-btn btn-theme-primary text-xs px-2 py-1 rounded">+</button>` : ''}
+                                <button class="delete-item-btn text-red-500 hover:text-red-400 text-lg">🗑️</button>
+                            </div>
+                        </div>
+                        ${childrenContainer}
+                    `;
+
+                    if (topicCheckboxState === 'indeterminate') {
+                        itemEl.querySelector('.topic-checkbox').indeterminate = true;
+                    }
+
+                    if (type !== 'subtopic' && (!item.collapsed || searchTerm) && item.children) {
+                        const childrenEl = itemEl.querySelector('.children-container');
+                        const childType = { subject: 'section', section: 'topic', topic: 'subtopic' }[type];
+                        item.children.forEach((child, childIndex) => {
+                            childrenEl.appendChild(createChecklistItem(child, [...indices, childIndex], childType, searchTerm));
+                        });
+                    }
+                    return itemEl;
+                }
+                
+                // STOPWATCH
+                const stopwatchDisplay = document.getElementById('stopwatch-display');
+                function formatTime(ms) {
+                    const totalSeconds = Math.floor(ms / 1000);
+                    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+                    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+                    const seconds = String(totalSeconds % 60).padStart(2, '0');
+                    return `${hours}:${minutes}:${seconds}`;
+                }
+
+                function updateStopwatchDisplay() {
+                    if (state.stopwatch.isRunning) {
+                        const now = Date.now();
+                        const totalElapsedTime = state.stopwatch.elapsedTime + (now - state.stopwatch.startTime);
+                        stopwatchDisplay.textContent = formatTime(totalElapsedTime);
+                    } else {
+                        stopwatchDisplay.textContent = formatTime(state.stopwatch.elapsedTime);
+                    }
+                }
+                
+                // UTILITY & OTHER FUNCTIONS
+                function getItemByIndices(indices) {
+                    if (!state || !state.checklists || !state.checklists[state.currentTheme]) return null;
+                    let items = state.checklists[state.currentTheme];
+                    let item = null;
+                    for (const index of indices) {
+                        if (!items || !items[index]) return null;
+                        item = items[index];
+                        items = item.children;
+                    }
+                    return item;
+                }
+                function deleteItemByIndices(indices) {
+                    let parent = { children: state.checklists[state.currentTheme] };
+                    for (let i = 0; i < indices.length - 1; i++) parent = parent.children[indices[i]];
+                    parent.children.splice(indices[indices.length - 1], 1);
+                }
+                function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
+                function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
+                function updateAchievements() {
+                    const completedCount = countCompletedTasks();
+                    const themeAchievements = state.achievements[state.currentTheme];
+                    const newLevel = Math.floor(completedCount / 10);
+                    if (newLevel > themeAchievements.level) {
+                        themeAchievements.level = newLevel;
+                        showLevelUpModal(newLevel);
+                    }
+                    updateBadge();
+                }
+                function countCompletedTasks() {
+                    let count = 0;
+                    function recurse(items) {
+                        items.forEach(item => {
+                            if (item.children && item.children.length > 0) recurse(item.children);
+                            else if (item.completed) count++;
+                        });
+                    }
+                    recurse(state.checklists[state.currentTheme] || []);
+                    return count;
+                }
+                function updateBadge() {
+                    if (!state || !state.achievements || !state.achievements[state.currentTheme]) return;
+                    const themeAchievements = state.achievements[state.currentTheme];
+                    document.getElementById('badge-level').textContent = themeAchievements.level;
+                    document.getElementById('main-quote').textContent = `"${themeAchievements.mainQuote}"`;
+                    const badge = document.getElementById('achievement-badge');
+                    badge.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
+                    const themeColors = { classic: ['bg-blue-500', 'text-white'], 'wonder-woman': ['bg-yellow-500', 'text-blue-900'], 'iron-man': ['bg-cyan-400', 'text-gray-900'], batman: ['bg-yellow-400', 'text-black'] };
+                    badge.classList.add(...themeColors[state.currentTheme]);
+                }
+                function showLevelUpModal(level) {
+                    document.getElementById('new-level-display').textContent = level;
+                    openModal('level-up-modal');
+                    document.getElementById('achievement-badge').classList.add('celebrate');
+                    setTimeout(() => document.getElementById('achievement-badge').classList.remove('celebrate'), 800);
+                }
+                function openCalendarNoteModal(dateStr) {
+                    currentCalendarDate = dateStr;
+                    const bookmark = state.calendar.bookmarks[dateStr] || { note: '' };
+                    document.getElementById('calendar-note-title').textContent = new Date(dateStr + 'T00:00:00').toDateString();
+                    document.getElementById('calendar-note-input').value = bookmark.note;
+                    openModal('calendar-note-modal');
+                }
+                function renderCalendar() {
+                    if (!state || !state.calendar) return;
+                    const calendarGrid = document.getElementById('calendar-grid');
+                    const monthYearEl = document.getElementById('calendar-month-year');
+                    calendarGrid.innerHTML = '';
+                    const date = new Date(state.calendar.date);
+                    monthYearEl.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
+                        calendarGrid.innerHTML += `<div class="font-bold text-secondary">${d}</div>`;
+                    });
+                    const month = date.getMonth(), year = date.getFullYear();
+                    const firstDay = new Date(year, month, 1).getDay();
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const dayEl = document.createElement('div');
+                        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                        dayEl.textContent = i;
+                        dayEl.dataset.date = dateStr;
+                        dayEl.className = 'p-1 cursor-pointer rounded-full transition-all duration-200';
+                        const today = new Date();
+                        if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                            dayEl.classList.add('bg-accent-primary', 'text-white');
+                        }
+                        if (state.calendar.bookmarks[dateStr]) {
+                            dayEl.style.border = '2px solid var(--accent-primary)';
+                            if(state.calendar.bookmarks[dateStr].note) dayEl.title = state.calendar.bookmarks[dateStr].note;
+                        }
+                        calendarGrid.appendChild(dayEl);
+                    }
+                }
+                function openNotesModal(indices) {
+                    currentEditingIndices = indices;
+                    const item = getItemByIndices(indices);
+                    if (!item) return;
+                    if (!item.notes) item.notes = { text: '', attachments: [] };
+                    document.getElementById('item-note-text').value = item.notes.text || '';
+                    renderAttachments(item.notes.attachments);
+                    openModal('notes-modal');
+                }
+                function saveNotes() {
+                    if (!currentEditingIndices) return;
+                    const item = getItemByIndices(currentEditingIndices);
+                    if (!item) return;
+                    item.notes.text = document.getElementById('item-note-text').value;
+                    saveState();
+                }
+                function renderAttachments(attachments) {
+                    const container = document.getElementById('attachments-container');
+                    container.innerHTML = '';
+                    if (!attachments || attachments.length === 0) {
+                        container.innerHTML = `<p class="text-sm text-secondary">No attachments yet.</p>`;
+                        return;
+                    }
+                    attachments.forEach((att, index) => {
+                        const isYoutube = att.url.includes('youtube.com') || att.url.includes('youtu.be');
+                        container.innerHTML += `
+                            <div class="flex items-center justify-between bg-primary p-2 rounded">
+                                <a href="${att.url}" target="_blank" class="truncate hover-accent-primary">${att.url}</a>
+                                <div>
+                                    ${isYoutube ? `<button class="play-youtube-btn" data-url="${att.url}">▶️</button>` : ''}
+                                    <button class="delete-attachment-btn" data-index="${index}">🗑️</button>
+                                </div>
+                            </div>`;
+                    });
+                }
+                function processBulkAdd() {
+                    const text = document.getElementById('bulk-add-input').value;
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    const currentChecklist = state.checklists[state.currentTheme];
+                    let path = [];
+                    lines.forEach(line => {
+                        const indent = line.match(/^\s*/)[0].length / 2;
+                        const content = line.trim();
+                        const match = content.match(/^([^:]+):\s*(.*)$/);
+                        if (!match) return;
+                        const title = match[2].trim();
+                        if (!title) return;
+                        const newItem = { title, children: [], collapsed: false, notes: { text: '', attachments: [] } };
+                        path.length = indent;
+                        if (indent === 0) {
+                            currentChecklist.push(newItem);
+                            path.push(currentChecklist[currentChecklist.length - 1]);
+                        } else {
+                            let parent = path[indent - 1];
+                            if (parent) {
+                                if (!parent.children) parent.children = [];
+                                parent.children.push(newItem);
+                                path.push(parent.children[parent.children.length - 1]);
+                            }
+                        }
+                    });
+                    renderChecklist();
+                    saveState();
+                    closeModal('bulk-add-modal');
+                }
+                function filterChecklist(nodes, term) {
+                    return nodes.map(node => ({...node})).filter(node => {
+                        if (node.children) node.children = filterChecklist(node.children, term);
+                        return node.title.toLowerCase().includes(term) || (node.children && node.children.length > 0);
+                    });
+                }
+                let focusInterval;
+                function startFocusSession(minutes) {
+                    const overlay = document.getElementById('focus-mode-overlay');
+                    const timerDisplay = document.getElementById('focus-timer');
+                    const themeBgColors = { classic: 'bg-blue-500', 'wonder-woman': 'bg-yellow-600', 'iron-man': 'bg-cyan-500', batman: 'bg-gray-900' };
+                    overlay.className = `fixed inset-0 flex flex-col items-center justify-center z-50 ${themeBgColors[state.currentTheme]}`;
+                    let totalSeconds = minutes * 60;
+                    const updateTimer = () => {
+                        const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                        const secs = String(totalSeconds % 60).padStart(2, '0');
+                        timerDisplay.textContent = `${mins}:${secs}`;
+                        if (totalSeconds-- <= 0) endFocusSession(true);
+                    };
+                    updateTimer();
+                    focusInterval = setInterval(updateTimer, 1000);
+                    document.getElementById('end-focus-session').onclick = () => endFocusSession(false);
+                }
+                function endFocusSession(isCompleted) {
+                    clearInterval(focusInterval);
+                    document.getElementById('focus-mode-overlay').classList.add('hidden');
+                    if (isCompleted) new Audio('https://www.soundjay.com/buttons/sounds/button-1.mp3').play();
+                }
+
+                // Initial UI setup
+                function initAppUI() {
+                    applyTheme(state.currentTheme, false);
+
+                    if (state.stopwatch.isRunning) {
+                        stopwatchInterval = setInterval(updateStopwatchDisplay, 1000);
+                    }
+                    updateStopwatchDisplay();
+
+                    // EVENT LISTENERS
+                    document.getElementById('checklist-container').addEventListener('click', (e) => {
+                        const target = e.target;
+                        const itemEl = target.closest('.checklist-item');
+                        if (!itemEl) return;
+                        const indices = itemEl.dataset.indices.split(',').map(Number);
+                        let item = getItemByIndices(indices);
+                        if (!item) return;
+                        if (target.classList.contains('collapsible-icon')) {
+                            item.collapsed = !item.collapsed;
+                            renderChecklist();
+                            saveState();
+                        } else if (target.classList.contains('delete-item-btn')) {
+                            if (confirm('Are you sure?')) {
+                                deleteItemByIndices(indices);
+                                renderChecklist();
+                                saveState();
+                            }
+                        } else if (target.classList.contains('add-child-btn')) {
+                            if (!item.children) item.children = [];
+                            const childType = { subject: 'section', section: 'topic', topic: 'subtopic' }[itemEl.dataset.type];
+                            item.children.push({ title: `New ${childType}`, completed: false, children: [], notes: { text: '', attachments: [] } });
+                            item.collapsed = false;
+                            renderChecklist();
+                            saveState();
+                            const newItemEl = document.querySelector(`[data-indices='${[...indices, item.children.length - 1].join(',')}']`);
+                            if(newItemEl) newItemEl.querySelector('.item-title').click();
+                        } else if (target.classList.contains('item-title')) {
+                            target.classList.add('hidden');
+                            const input = target.nextElementSibling;
+                            input.classList.remove('hidden');
+                            input.focus();
+                            input.select();
+                        } else if (target.classList.contains('subtopic-checkbox')) {
+                            item.completed = target.checked;
+                            updateAchievements();
+                            renderChecklist();
+                            saveState();
+                        } else if (target.classList.contains('topic-checkbox')) {
+                            const isChecked = target.checked;
+                            if (item.children) item.children.forEach(subtopic => subtopic.completed = isChecked);
+                            updateAchievements();
+                            renderChecklist();
+                            saveState();
+                        } else if (target.classList.contains('notes-btn')) {
+                            openNotesModal(indices);
+                        }
+                    });
+                    document.getElementById('checklist-container').addEventListener('focusout', (e) => {
+                        if (e.target.classList.contains('item-edit-input')) {
+                            const input = e.target;
+                            const itemEl = input.closest('.checklist-item');
+                            const indices = itemEl.dataset.indices.split(',').map(Number);
+                            let item = getItemByIndices(indices);
+                            item.title = input.value.trim() || item.title;
+                            renderChecklist();
+                            saveState();
+                        }
+                    });
+                    document.getElementById('checklist-container').addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && e.target.classList.contains('item-edit-input')) e.target.blur();
+                    });
+                    stopwatchDisplay.addEventListener('click', () => {
+                        const { isRunning } = state.stopwatch;
+                        if (isRunning) {
+                            state.stopwatch.elapsedTime += Date.now() - state.stopwatch.startTime;
+                            state.stopwatch.isRunning = false;
+                            clearInterval(stopwatchInterval);
+                        } else {
+                            state.stopwatch.startTime = Date.now();
+                            state.stopwatch.isRunning = true;
+                            stopwatchInterval = setInterval(updateStopwatchDisplay, 1000);
+                        }
+                        saveState();
+                    });
+                    stopwatchDisplay.addEventListener('dblclick', () => {
+                        state.stopwatch = { startTime: 0, elapsedTime: 0, isRunning: false };
+                        clearInterval(stopwatchInterval);
+                        stopwatchDisplay.textContent = formatTime(0);
+                        saveState();
+                    });
+                    document.getElementById('theme-switcher').addEventListener('click', e => { if (e.target.matches('.theme-btn')) { applyTheme(e.target.dataset.theme); } });
+                    document.getElementById('add-subject-btn').addEventListener('click', () => {
+                        state.checklists[state.currentTheme].push({ title: 'New Subject', collapsed: false, children: [], notes: { text: '', attachments: [] } });
+                        renderChecklist();
+                        saveState();
+                    });
+                    document.getElementById('search-bar').addEventListener('input', e => renderChecklist(e.target.value));
+                    document.getElementById('main-title').addEventListener('blur', e => { state.mainTitle = e.target.textContent; saveState(); });
+                    document.getElementById('main-quote').addEventListener('blur', e => { state.achievements[state.currentTheme].mainQuote = e.target.textContent; saveState(); });
+                    document.getElementById('focus-25').addEventListener('click', () => startFocusSession(25));
+                    document.getElementById('focus-50').addEventListener('click', () => startFocusSession(50));
+                    document.getElementById('prev-month').addEventListener('click', () => { const d = new Date(state.calendar.date); d.setMonth(d.getMonth() - 1); state.calendar.date = d.toISOString(); renderCalendar(); saveState(); });
+                    document.getElementById('next-month').addEventListener('click', () => { const d = new Date(state.calendar.date); d.setMonth(d.getMonth() + 1); state.calendar.date = d.toISOString(); renderCalendar(); saveState(); });
+                    document.getElementById('save-calendar-note').addEventListener('click', () => {
+                        if (!currentCalendarDate) return;
+                        if (!state.calendar.bookmarks[currentCalendarDate]) state.calendar.bookmarks[currentCalendarDate] = {};
+                        state.calendar.bookmarks[currentCalendarDate].note = document.getElementById('calendar-note-input').value;
+                        renderCalendar();
+                        saveState();
+                        closeModal('calendar-note-modal');
+                    });
+                    document.getElementById('delete-calendar-note').addEventListener('click', () => {
+                        if (!currentCalendarDate) return;
+                        delete state.calendar.bookmarks[currentCalendarDate];
+                        renderCalendar();
+                        saveState();
+                        closeModal('calendar-note-modal');
+                    });
+                    document.getElementById('close-calendar-note-modal').addEventListener('click', () => closeModal('calendar-note-modal'));
+                    document.getElementById('close-notes-modal').addEventListener('click', () => { saveNotes(); closeModal('notes-modal'); });
+                    document.getElementById('item-note-text').addEventListener('blur', saveNotes);
+                    document.getElementById('add-link-btn').addEventListener('click', () => {
+                        const url = document.getElementById('attachment-input').value.trim();
+                        if (url && currentEditingIndices) {
+                            const item = getItemByIndices(currentEditingIndices);
+                            if (!item.notes.attachments) item.notes.attachments = [];
+                            item.notes.attachments.push({ type: 'link', url });
+                            renderAttachments(item.notes.attachments);
+                            saveState();
+                            document.getElementById('attachment-input').value = '';
+                        }
+                    });
+                    document.getElementById('attachments-container').addEventListener('click', e => {
+                        if (e.target.classList.contains('delete-attachment-btn')) {
+                            const index = e.target.dataset.index;
+                            const item = getItemByIndices(currentEditingIndices);
+                            item.notes.attachments.splice(index, 1);
+                            renderAttachments(item.notes.attachments);
+                            saveState();
+                        } else if (e.target.classList.contains('play-youtube-btn')) {
+                            try {
+                                const videoId = new URL(e.target.dataset.url).searchParams.get('v');
+                                if (videoId) {
+                                    document.getElementById('youtube-player-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                                    openModal('youtube-player-modal');
+                                }
+                            } catch (error) {
+                                console.error("Invalid YouTube URL:", error);
+                                alert("Please enter a valid YouTube URL.");
+                            }
+                        }
+                    });
+                    document.getElementById('close-youtube-modal').addEventListener('click', () => {
+                        document.getElementById('youtube-player-container').innerHTML = '';
+                        closeModal('youtube-player-modal');
+                    });
+                    document.getElementById('bulk-add-btn').addEventListener('click', () => openModal('bulk-add-modal'));
+                    document.getElementById('close-bulk-add-modal').addEventListener('click', () => closeModal('bulk-add-modal'));
+                    document.getElementById('process-bulk-add').addEventListener('click', processBulkAdd);
+                    document.getElementById('achievement-badge').addEventListener('click', () => {
+                        const quoteList = document.getElementById('quote-list');
+                        quoteList.innerHTML = '';
+                        const themeQuotes = quotes[state.currentTheme];
+                        const themeAchievements = state.achievements[state.currentTheme];
+                        themeQuotes.forEach((quote, index) => {
+                            const li = document.createElement('li');
+                            li.className = 'p-2 border-b border-theme';
+                            li.textContent = `"${quote}"`;
+                            if (index > themeAchievements.level) {
+                                li.classList.add('text-secondary', 'italic');
+                                li.textContent += ' (Locked)';
+                            } else {
+                                li.classList.add('text-primary');
+                            }
+                            quoteList.appendChild(li);
+                        });
+                        openModal('quote-modal');
+                    });
+                    document.getElementById('close-quote-modal').addEventListener('click', () => closeModal('quote-modal'));
+                    document.getElementById('close-level-up-modal').addEventListener('click', () => closeModal('level-up-modal'));
+                
+                    document.getElementById('calendar-grid').addEventListener('click', e => {
+                        if (e.target.dataset.date) openCalendarNoteModal(e.target.dataset.date);
+                    });
+                }
+            });
+        }
+
+        // Start the app
+        mainAppLogic(db, auth);
+
+    </script>
+</body>
+</html>
