@@ -6,6 +6,7 @@
     <title>Focus Mode</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* CSS Variables for theming */
@@ -15,7 +16,7 @@
 
             /* Classic Theme */
             --classic-bg: #f4f7f6;
-            --classic-surface-bg: #ffffff;
+            --classic-surface-bg: rgba(255, 255, 255, 0.85); /* Semi-transparent */
             --classic-text: #333333;
             --classic-primary: #4a90e2;
             --classic-primary-text: #ffffff;
@@ -30,7 +31,7 @@
 
             /* Batman Theme */
             --batman-bg: #0d1117;
-            --batman-surface-bg: #161b22;
+            --batman-surface-bg: rgba(22, 27, 34, 0.85); /* Semi-transparent */
             --batman-text: #c9d1d9;
             --batman-primary: #f0b90b;
             --batman-primary-text: #0d1117;
@@ -43,44 +44,32 @@
             --batman-heatmap-high: #26a641;
             --batman-heatmap-very-high: #39d353;
         }
+        
+        /* NEW: Canvas background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Place it behind everything */
+        }
 
         body {
             font-family: var(--font-family-sans);
             transition: background-color 0.3s, color 0.3s;
             margin: 0;
             padding: 20px;
-            padding-bottom: 80px; /* Add padding to prevent content from being hidden by the bottom controls */
+            padding-bottom: 80px;
             box-sizing: border-box;
-        }
-
-        .classic-theme {
-            background-color: var(--classic-bg);
-            color: var(--classic-text);
-        }
-
-        .batman-theme {
-            background-color: var(--batman-bg);
-            color: var(--batman-text);
+            background-color: var(--classic-bg); /* Fallback bg */
         }
         
-        .header-controls {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            z-index: 10;
-        }
-
-        .app-container {
-            max-width: 1200px;
-            margin: auto;
-            margin-top: 50px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-        }
+        .classic-theme { color: var(--classic-text); }
+        .batman-theme { color: var(--batman-text); }
+        
+        .header-controls { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 20px; z-index: 10; }
+        .app-container { max-width: 1200px; margin: auto; margin-top: 50px; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
 
         .card {
             border-radius: 12px;
@@ -89,47 +78,20 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(10px);
         }
         
-        .full-width {
-            grid-column: 1 / -1;
-        }
+        .full-width { grid-column: 1 / -1; }
+        .classic-theme .card { background-color: var(--classic-surface-bg); border: 1px solid var(--classic-border); }
+        .batman-theme .card { background-color: var(--batman-surface-bg); border: 1px solid var(--batman-border); }
 
-        .classic-theme .card {
-            background-color: var(--classic-surface-bg);
-            border: 1px solid var(--classic-border);
-        }
+        h2 { margin-top: 0; font-family: var(--font-family-mono); display: flex; justify-content: space-between; align-items: center; }
+        h2 .date-display { font-size: 0.9rem; font-family: var(--font-family-sans); font-weight: 400; }
 
-        .batman-theme .card {
-            background-color: var(--batman-surface-bg);
-            border: 1px solid var(--batman-border);
-        }
-
-        h2 {
-            margin-top: 0;
-            font-family: var(--font-family-mono);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        h2 .date-display {
-            font-size: 0.9rem;
-            font-family: var(--font-family-sans);
-            font-weight: 400;
-        }
-
-        [contenteditable="true"] {
-            cursor: text;
-            padding: 2px 5px;
-            border-radius: 4px;
-        }
-        [contenteditable="true"]:focus {
-            outline: 2px solid var(--classic-primary);
-        }
-        .batman-theme [contenteditable="true"]:focus {
-            outline: 2px solid var(--batman-primary);
-        }
+        [contenteditable="true"] { cursor: text; padding: 2px 5px; border-radius: 4px; }
+        [contenteditable="true"]:focus { outline: 2px solid var(--classic-primary); }
+        .batman-theme [contenteditable="true"]:focus { outline: 2px solid var(--batman-primary); }
 
         /* Theme Switcher */
         .theme-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
@@ -141,14 +103,7 @@
         input:checked + .slider:before { transform: translateX(26px); }
 
         /* Timer Section */
-        #timer-display {
-            font-family: var(--font-family-mono);
-            font-size: clamp(3rem, 10vw, 4rem);
-            text-align: center;
-            margin: 20px 0;
-            font-weight: 700;
-        }
-        
+        #timer-display { font-family: var(--font-family-mono); font-size: clamp(3rem, 10vw, 4rem); text-align: center; margin: 20px 0; font-weight: 700; }
         #progress-bar-container { width: 100%; height: 10px; border-radius: 5px; margin-bottom: 20px; }
         .classic-theme #progress-bar-container { background-color: var(--classic-border); }
         .batman-theme #progress-bar-container { background-color: var(--batman-border); }
@@ -162,14 +117,9 @@
         .batman-theme .timer-inputs input { background-color: var(--batman-bg); border-color: var(--batman-border); color: var(--batman-text); }
         
         /* Better Button Styles */
-        button, .btn-secondary {
-            padding: 10px 20px; font-size: 1rem; font-weight: bold; border-radius: 8px; border: none; cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+        button, .btn-secondary { padding: 10px 20px; font-size: 1rem; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s ease-in-out; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         button:hover, .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         button:active, .btn-secondary:active { transform: translateY(0px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
         .btn-primary { color: var(--classic-primary-text); }
         .classic-theme .btn-primary { background-color: var(--classic-primary); }
         .batman-theme .btn-primary { background-color: var(--batman-primary); color: var(--batman-primary-text); }
@@ -231,19 +181,22 @@
         .sound-icon.active { transform: scale(1.1); }
         .classic-theme .sound-icon.active { background-color: var(--classic-primary); color: var(--classic-primary-text); border-color: var(--classic-primary); }
         .batman-theme .sound-icon.active { background-color: var(--batman-primary); color: var(--batman-primary-text); border-color: var(--batman-primary); }
-        .sound-icon svg { width: 30px; height: 30px; stroke-width: 1.5; fill: none; stroke: currentColor; } /* MODIFIED: For line icons */
+        .sound-icon svg { width: 30px; height: 30px; stroke-width: 1.5; fill: none; stroke: currentColor; }
         .sound-control .volume-slider { width: 100%; height: 5px; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; }
         .sound-control .volume-slider.visible { opacity: 1; visibility: visible; }
 
         /* Bottom Controls */
         .bottom-controls { position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; border-top: 1px solid; }
-        .classic-theme .bottom-controls { background-color: var(--classic-bg); border-color: var(--classic-border); }
-        .batman-theme .bottom-controls { background-color: var(--batman-bg); border-color: var(--batman-border); }
+        .classic-theme .bottom-controls { background-color: rgba(244, 247, 246, 0.85); border-color: var(--classic-border); backdrop-filter: blur(10px); }
+        .batman-theme .bottom-controls { background-color: rgba(13, 17, 23, 0.85); border-color: var(--batman-border); backdrop-filter: blur(10px); }
         .bottom-controls > * { padding: 6px 12px; font-size: 0.8rem; font-weight: bold; text-decoration: none; border-radius: 6px; }
 
     </style>
 </head>
 <body class="hidden"> 
+
+    <!-- NEW: 3D Scene Canvas -->
+    <canvas id="bg-canvas"></canvas>
 
     <div class="header-controls">
         <label class="theme-switch">
@@ -252,7 +205,7 @@
         </label>
     </div>
 
-    <div id="loading-container" class="w-screen h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+    <div id="loading-container" class="w-screen h-screen flex items-center justify-center">
         <div id="loading-spinner" class="text-center">
             <p class="text-2xl text-gray-500 animate-pulse">Loading Focus Mode...</p>
         </div>
@@ -356,6 +309,61 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // --- 3D Scene Setup ---
+        function initThreeScene() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // Trees
+            const treeMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513, transparent: true, opacity: 0.5 });
+            for (let i = 0; i < 50; i++) {
+                const height = Math.random() * 10 + 5;
+                const geometry = new THREE.CylinderGeometry(0.1, 0.2, height, 8);
+                const tree = new THREE.Mesh(geometry, treeMaterial);
+                tree.position.x = (Math.random() - 0.5) * 40;
+                tree.position.z = (Math.random() - 0.5) * 40 - 20;
+                tree.position.y = height / 2 - 5;
+                scene.add(tree);
+            }
+
+            // Falling Leaves
+            const leavesGeometry = new THREE.BufferGeometry();
+            const leavesCount = 1500;
+            const posArray = new Float32Array(leavesCount * 3);
+            for (let i = 0; i < leavesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 50;
+            }
+            leavesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const leavesMaterial = new THREE.PointsMaterial({ size: 0.05, color: 0x6B8E23 });
+            const leavesMesh = new THREE.Points(leavesGeometry, leavesMaterial);
+            scene.add(leavesMesh);
+
+            camera.position.z = 5;
+
+            const clock = new THREE.Clock();
+
+            function animate() {
+                const elapsedTime = clock.getElapsedTime();
+                // Animate leaves falling
+                leavesMesh.position.y = (elapsedTime * -0.2) % 10;
+                // Gentle camera sway for "breeze"
+                camera.position.x = Math.sin(elapsedTime * 0.1) * 0.5;
+                camera.position.y = Math.cos(elapsedTime * 0.1) * 0.2;
+                camera.lookAt(scene.position);
+                renderer.render(scene, camera);
+                window.requestAnimationFrame(animate);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
         // --- Main App Logic ---
         function initializeFocusApp(db, auth, user, initialData) {
             // DOM Elements
@@ -391,7 +399,7 @@
 
             // State Management
             let mainTimer, generalTasks, focusHistory, checklistHistory, theme, checklistTitleText;
-            let audioInitialized = false; // Flag to check if Tone.js is started
+            let audioInitialized = false; 
             
             const defaultFocusState = {
                 theme: 'classic',
@@ -785,11 +793,11 @@
             const soundLibrary = {
                 rain: {
                     name: "Rain",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 22a1 1 0 0 1-1-1v-5a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zm-4-2a1 1 0 0 1-1-1v-3a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1zm8 0a1 1 0 0 1-1-1v-3a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1zm-4-5a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zm-4-2a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zm8 0a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zM12 11a1 1 0 0 1-1-1V5a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zM7.05 4.95A9 9 0 0 1 19.24 12h-2.1A7 7 0 0 0 7.05 4.95z"/></svg>`,
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 18v-2.22a5.5 5.5 0 0 1 2.2-4.34l.32-.26a3.5 3.5 0 0 0-4.95-4.95L4.3 6.5A7.5 7.5 0 0 1 12 4.05V2a1 1 0 0 1 2 0v2.05a7.5 7.5 0 0 1 7.7 7.45H20a1 1 0 0 1 0 2h-1.05A5.5 5.5 0 0 1 14.6 18H13v4a1 1 0 0 1-2 0v-4z"/></svg>`,
                     factory: () => {
                         const finalNode = new Tone.Filter(1200, "lowpass");
                         const player = new Tone.Noise("pink").connect(finalNode);
-                        return { player, finalNode, nodesToDispose: [player, finalNode] };
+                        return { player, finalNode, nodesToDispose: [player, finalNode], toStart: [player] };
                     }
                 },
                 wind: {
@@ -799,17 +807,26 @@
                         const finalNode = new Tone.Filter(400, "lowpass");
                         const lfo = new Tone.LFO("0.2", 200, 600).connect(finalNode.frequency);
                         const player = new Tone.Noise("brown").connect(finalNode);
-                        return { player, finalNode, nodesToDispose: [player, finalNode, lfo], toStart: [lfo] };
+                        return { player, finalNode, nodesToDispose: [player, finalNode, lfo], toStart: [player, lfo] };
                     }
                 },
-                fire: {
-                    name: "Fire",
-                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 4.25-2.69 7.82-6 8.86A1 1 0 0 0 0 19h24a1 1 0 0 0 1-1.14C21.69 16.82 19 13.25 19 9c0-3.87-3.13-7-7-7zm0 15a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3z"/></svg>`,
+                forest: {
+                    name: "Forest",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 12a1 1 0 0 1-1-1V8a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1zm-4 2a1 1 0 0 1-1-1v-3a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1zm-4 3a1 1 0 0 1-1-1v-5a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zm11-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zM2 22h20a1 1 0 0 1 0 2H2a1 1 0 0 1 0-2z"/></svg>`,
                     factory: () => {
-                        const finalNode = new Tone.Filter(2000, "highpass");
-                        const lpFilter = new Tone.Filter(700, "lowpass").connect(finalNode);
-                        const player = new Tone.Noise("white").connect(lpFilter);
-                        return { player, finalNode, nodesToDispose: [player, finalNode, lpFilter] };
+                        const finalNode = new Tone.Gain();
+                        const wind = new Tone.Noise("pink").connect(new Tone.Filter(300, "lowpass").connect(finalNode));
+                        const chirpSynth = new Tone.Synth({
+                            oscillator: { type: "sine" },
+                            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+                        }).connect(finalNode);
+                        const chirpLoop = new Tone.Loop(time => {
+                            if (Math.random() > 0.6) {
+                                const pitch = Math.random() * 500 + 800;
+                                chirpSynth.triggerAttackRelease(pitch, "16n", time);
+                            }
+                        }, "1s");
+                        return { player: chirpLoop, finalNode, nodesToDispose: [wind, chirpSynth, chirpLoop, finalNode], toStart: [wind] };
                     }
                 },
                 train: {
@@ -817,14 +834,11 @@
                     icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 4H6a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4V8a4 4 0 0 0-4-4zM6 6h12a2 2 0 0 1 2 2v1H4V8a2 2 0 0 1 2-2zm12 12H6a2 2 0 0 1-2-2v-5h16v5a2 2 0 0 1-2 2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>`,
                     factory: () => {
                         const finalNode = new Tone.Gain();
-                        // Rumble
                         const rumble = new Tone.Noise("brown").connect(new Tone.Filter(200, "lowpass").connect(finalNode));
-                        // Clack sound
                         const clackSynth = new Tone.NoiseSynth({
                             noise: { type: 'white' },
                             envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 }
                         }).connect(finalNode);
-                        // Rhythmic loop for the clack
                         const clackLoop = new Tone.Loop(time => {
                             clackSynth.triggerAttackRelease("32n", time);
                         }, "4n");
@@ -855,6 +869,9 @@
                 const slider = document.querySelector(`.volume-slider[data-sound="${key}"]`);
                 if (state.isPlaying) {
                     state.sound.player.stop();
+                    if (state.sound.toStart) {
+                        state.sound.toStart.forEach(node => node.stop());
+                    }
                     state.sound.nodesToDispose.forEach(node => node.dispose());
                     state.volume.dispose();
                     state.isPlaying = false;
@@ -953,6 +970,7 @@
                 document.getElementById('app-container').classList.remove('hidden');
                 document.body.classList.remove('hidden');
 
+                initThreeScene(); // Start the 3D scene
                 initializeFocusApp(db, auth, currentUser, initialData);
 
             } catch (error) {
