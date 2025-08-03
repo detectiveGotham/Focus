@@ -533,7 +533,7 @@
 
     </style>
 </head>
-<body class="hidden"> <!-- NEW: Body is hidden by default to prevent flash of unstyled content -->
+<body class="hidden"> 
 
     <div class="header-controls">
         <label class="theme-switch">
@@ -542,12 +542,18 @@
         </label>
     </div>
 
-    <!-- NEW: Loading container -->
+    <!-- MODIFIED: Loading container now includes an error state -->
     <div id="loading-container" class="w-screen h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <p class="text-2xl text-gray-500 animate-pulse">Loading Focus Mode...</p>
+        <div id="loading-spinner" class="text-center">
+            <p class="text-2xl text-gray-500 animate-pulse">Loading Focus Mode...</p>
+        </div>
+        <div id="error-container" class="hidden text-center">
+            <p class="text-xl text-red-500 mb-4">Could not load your data from the cloud.</p>
+            <button id="retry-btn" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600">Retry</button>
+        </div>
     </div>
 
-    <div id="app-container" class="app-container hidden"> <!-- NEW: App container is hidden by default -->
+    <div id="app-container" class="app-container hidden">
         <!-- Timer Card -->
         <div class="card">
             <h2>Focus Timer</h2>
@@ -598,7 +604,6 @@
     </div>
     
     <div class="bottom-controls">
-        <!-- MODIFIED: Link is now relative -->
         <a href="./index.html" class="btn-secondary">Back to Main</a>
         <button id="sound-mixer-btn" class="btn-secondary">Sounds</button>
     </div>
@@ -607,13 +612,12 @@
     <div id="sound-mixer-modal">
         <div class="sound-mixer-panel">
             <div class="sound-grid" id="sound-grid">
-                <!-- Sound controls will be injected here by JS -->
             </div>
             <button id="close-mixer-btn" class="btn-primary" style="align-self: center;">Close</button>
         </div>
     </div>
 
-    <!-- NEW: Firebase SDK script -->
+    <!-- Firebase SDK script -->
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
@@ -637,10 +641,8 @@
         const db = getFirestore(app);
 
         // --- Main App Logic ---
-        // This function holds all the original application logic.
-        // It's called only after we confirm a user is logged in.
         function initializeFocusApp(db, auth, user, initialData) {
-            // --- DOM Elements ---
+            // DOM Elements
             const themeToggle = document.getElementById('theme-toggle');
             const body = document.body;
             const timerDisplay = document.getElementById('timer-display');
@@ -667,10 +669,9 @@
             const closeMixerBtn = document.getElementById('close-mixer-btn');
             const soundGrid = document.getElementById('sound-grid');
 
-            // --- State Management ---
+            // State Management
             let mainTimer, generalTasks, focusHistory, checklistHistory, theme, checklistTitleText;
             
-            // Default state for the focus page
             const defaultFocusState = {
                 theme: 'classic',
                 checklistTitleText: 'General Checklist',
@@ -680,15 +681,9 @@
                 checklistHistory: {}
             };
 
-            // --- NEW: Load state from the data passed by the auth listener ---
             function loadState() {
-                // The `initialData` object is the full user document from Firestore.
-                // We look for a `focusState` property inside it.
                 const savedFocusState = initialData.focusState || {};
-                
-                // Merge saved state with defaults to prevent errors if new properties are added
                 const mergedState = { ...defaultFocusState, ...savedFocusState };
-
                 theme = mergedState.theme;
                 checklistTitleText = mergedState.checklistTitleText;
                 mainTimer = mergedState.mainTimer;
@@ -697,24 +692,12 @@
                 checklistHistory = mergedState.checklistHistory;
             }
 
-            // --- NEW: Save state back to Firestore ---
             const saveState = async (showNotification = false) => {
-                if (!user) return; // Don't save if there's no user
-                
-                const focusState = {
-                    theme,
-                    checklistTitleText,
-                    mainTimer,
-                    generalTasks,
-                    focusHistory,
-                    checklistHistory
-                };
-
+                if (!user) return;
+                const focusState = { theme, checklistTitleText, mainTimer, generalTasks, focusHistory, checklistHistory };
                 try {
                     const userDocRef = doc(db, "user_data", user.uid);
-                    // Use { merge: true } to avoid overwriting the main checklist data from index.html
                     await setDoc(userDocRef, { focusState: focusState }, { merge: true });
-
                     if (showNotification) {
                         const originalText = saveDataBtn.textContent;
                         saveDataBtn.textContent = 'Saved!';
@@ -722,18 +705,13 @@
                     }
                 } catch (e) {
                     console.error("Error saving focus state to Firestore:", e);
-                    alert("Could not save focus data to the cloud.");
                 }
             };
             
-            // --- The rest of your original JS logic remains largely the same ---
-            // It just uses the state variables defined above instead of reading from localStorage.
-            
             const init = () => {
-                loadState(); // Load the state from the initial data
+                loadState();
                 initSoundMixer();
                 renderAll();
-                // Handle a timer that was running when the page was closed
                 if (mainTimer.isActive) {
                     handleTimerOnLoad();
                 }
@@ -749,7 +727,6 @@
                 checklistTitle.textContent = checklistTitleText;
             };
 
-            // --- Theme Management ---
             function updateThemeUI() {
                 const isBatman = theme === 'batman';
                 body.classList.toggle('batman-theme', isBatman);
@@ -763,19 +740,16 @@
                 saveState();
             });
 
-            // --- Main Timer Logic ---
             const handleTimerOnLoad = () => {
                 const newSecondsRemaining = Math.max(0, Math.floor((mainTimer.endTime - Date.now()) / 1000));
                 const secondsElapsed = mainTimer.secondsRemaining - newSecondsRemaining;
                 mainTimer.timeSpent += secondsElapsed;
                 mainTimer.secondsRemaining = newSecondsRemaining;
-
                 if (mainTimer.isPaused) {
                     updateUI();
                     updateTimerDisplay();
                     return;
                 }
-
                 if (mainTimer.secondsRemaining <= 0) {
                     handleTimerCompletion(true);
                 } else {
@@ -809,11 +783,9 @@
                     mainTimer.secondsRemaining = mainTimer.totalSeconds;
                     mainTimer.timeSpent = 0;
                 }
-                
                 mainTimer.isActive = true;
                 mainTimer.isPaused = false;
                 mainTimer.endTime = Date.now() + mainTimer.secondsRemaining * 1000;
-
                 clearInterval(mainTimer.interval);
                 mainTimer.interval = setInterval(() => {
                     if (mainTimer.secondsRemaining > 0) {
@@ -825,7 +797,7 @@
                     }
                 }, 1000);
                 updateUI();
-                saveState(); // Save timer state when it starts
+                saveState();
             };
 
             const pauseTimer = () => {
@@ -878,7 +850,6 @@
                 pauseBtn.textContent = mainTimer.isPaused ? 'Resume' : 'Pause';
             };
 
-            // --- Task Logic ---
             const createTimeDisplay = (seconds) => {
                 const mins = Math.floor(seconds / 60);
                 const secs = seconds % 60;
@@ -940,7 +911,6 @@
             const toggleGeneralTaskTimer = (id) => {
                 const task = generalTasks.find(t => t.id === id);
                 if (!task || task.completed) return;
-
                 task.isActive = !task.isActive;
                 if (task.isActive) {
                     task.intervalId = setInterval(() => {
@@ -969,7 +939,7 @@
                     if (task) task.text = e.target.value;
                 }
             });
-            generalTasksList.addEventListener('focusout', () => saveState()); // Save when user clicks away from a task input
+            generalTasksList.addEventListener('focusout', () => saveState());
 
             generalTasksList.addEventListener('click', e => {
                 if (e.target.tagName !== 'BUTTON') return;
@@ -979,7 +949,6 @@
                 if (action === 'delete') deleteGeneralTask(id);
             });
 
-            // --- History & Stats Logic ---
             const saveFocusHistory = (seconds) => {
                 const today = new Date().toISOString().split('T')[0];
                 const minutes = Math.floor(seconds / 60);
@@ -1027,29 +996,22 @@
                 const data = checklistHistory;
                 const unit = 'tasks';
                 const dateEl = checklistHeatmapDate;
-
                 container.innerHTML = '';
                 monthsContainer.innerHTML = '';
                 heatmapDaysOfWeekContainerLeft.innerHTML = '';
                 heatmapDaysOfWeekContainerRight.innerHTML = '';
-                
                 const today = new Date();
                 const todayString = today.toISOString().split('T')[0];
                 dateEl.textContent = today.toLocaleString('default', { dateStyle: 'long' });
-
                 const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
                 const dayLabelsHtml = days.map(d => `<div class="heatmap-day-label">${d}</div>`).join('');
                 heatmapDaysOfWeekContainerLeft.innerHTML = dayLabelsHtml;
                 heatmapDaysOfWeekContainerRight.innerHTML = dayLabelsHtml;
-
-
                 const endDate = new Date();
                 const startDate = new Date();
                 startDate.setFullYear(endDate.getFullYear() - 1);
-                
                 let date = new Date(startDate);
                 date.setDate(date.getDate() - date.getDay());
-
                 let lastMonth = -1;
                 while (date <= endDate) {
                     if (date.getMonth() !== lastMonth) {
@@ -1059,14 +1021,12 @@
                         monthsContainer.appendChild(monthEl);
                         lastMonth = date.getMonth();
                     }
-
                     const dateString = date.toISOString().split('T')[0];
                     const dayEl = document.createElement('div');
                     dayEl.classList.add('heatmap-day');
                     if (dateString === todayString) {
                         dayEl.classList.add('today');
                     }
-                    
                     const value = data[dateString] || 0;
                     let level = 0;
                     if (value > 0) {
@@ -1076,16 +1036,13 @@
                         else if (value <= thresholds[2]) level = 3;
                         else level = 4;
                     }
-                    
                     if (level > 0) dayEl.dataset.level = level;
-
                     dayEl.innerHTML = `<span class="tooltip">${value} ${unit} on ${date.toDateString()}</span>`;
                     container.appendChild(dayEl);
                     date.setDate(date.getDate() + 1);
                 }
             };
             
-            // --- Sound Mixer Logic ---
             const soundLibrary = {
                 rain: { name: "Rain", icon: `<svg viewBox="0 0 24 24"><path d="M12,2A9,9,0,0,0,3,11c0,4.28,3,7.84,7,8.79V12a2,2,0,0,1,2-2h0a2,2,0,0,1,2,2v7.79c4-0.95,7-4.51,7-8.79A9,9,0,0,0,12,2ZM8,16a1,1,0,0,1-2,0V13a1,1,0,0,1,2,0Zm4,2a1,1,0,0,1-2,0V14a1,1,0,0,1,2,0Zm4-3a1,1,0,0,1-2,0V12a1,1,0,0,1,2,0Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(1000, "lowpass"); const player = new Tone.Noise("pink").connect(finalNode); return { player, finalNode, otherNodes: [] }; } },
                 wind: { name: "Wind", icon: `<svg viewBox="0 0 24 24"><path d="M19.5,6A2.5,2.5,0,0,0,17,8.5a2.42,2.42,0,0,0,0,.31,3.5,3.5,0,0,0-3.5-3.5,3.44,3.44,0,0,0-1.46.33A4.5,4.5,0,0,0,7.5,10H3a1,1,0,0,0,0,2H7.5a4.41,4.41,0,0,0,0.29.0A4.5,4.5,0,0,0,12,14.5a4.44,4.44,0,0,0,1.46-.33,3.5,3.5,0,0,0,3.5,3.5,3.42,3.42,0,0,0,.5,0,2.5,2.5,0,0,0,2.5,2.5,2.5,2.5,0,0,0,0-5,2.42,2.42,0,0,0,0-.31,3.5,3.5,0,0,0,3.5-3.5,3.44,3.44,0,0,0-1.46-.33A4.5,4.5,0,0,0,19.5,6Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(400, "lowpass"); const lfo = new Tone.LFO("0.2", 200, 600).connect(finalNode.frequency).start(); const player = new Tone.Noise("brown").connect(finalNode); return { player, finalNode, otherNodes: [lfo] }; } },
@@ -1099,7 +1056,6 @@
                 for (const key in soundLibrary) {
                     const sound = soundLibrary[key];
                     mixerState[key] = { player: null, finalNode: null, otherNodes: [], isPlaying: false, volume: null };
-
                     const controlEl = document.createElement('div');
                     controlEl.className = 'sound-control';
                     controlEl.innerHTML = `
@@ -1115,7 +1071,6 @@
                 const state = mixerState[key];
                 const icon = document.querySelector(`.sound-icon[data-sound="${key}"]`);
                 const slider = document.querySelector(`.volume-slider[data-sound="${key}"]`);
-
                 if (state.isPlaying) {
                     state.player.stop();
                     state.player.dispose();
@@ -1174,7 +1129,6 @@
                 }
             });
 
-            // --- Event Listeners ---
             startBtn.addEventListener('click', () => startTimer(false));
             pauseBtn.addEventListener('click', pauseTimer);
             resetBtn.addEventListener('click', resetTimer);
@@ -1188,38 +1142,49 @@
             });
             window.addEventListener('beforeunload', () => saveState(false));
 
-            // --- Initial Call ---
             init();
         }
 
-        // --- NEW: Authentication Entry Point ---
+        // --- Authentication Entry Point ---
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const errorContainer = document.getElementById('error-container');
+        const retryBtn = document.getElementById('retry-btn');
+        let currentUser = null;
+
+        async function fetchUserDataAndInitialize() {
+            if (!currentUser) return;
+
+            loadingSpinner.classList.remove('hidden');
+            errorContainer.classList.add('hidden');
+
+            const userDocRef = doc(db, "user_data", currentUser.uid);
+            try {
+                const docSnap = await getDoc(userDocRef);
+                let initialData = {};
+                if (docSnap.exists()) {
+                    initialData = docSnap.data();
+                }
+                
+                document.getElementById('loading-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.body.classList.remove('hidden');
+
+                initializeFocusApp(db, auth, currentUser, initialData);
+
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                loadingSpinner.classList.add('hidden');
+                errorContainer.classList.remove('hidden');
+            }
+        }
+
+        retryBtn.addEventListener('click', fetchUserDataAndInitialize);
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // User is logged in. Fetch their data.
-                const userDocRef = doc(db, "user_data", user.uid);
-                try {
-                    const docSnap = await getDoc(userDocRef);
-                    let initialData = {};
-                    if (docSnap.exists()) {
-                        initialData = docSnap.data();
-                    }
-                    
-                    // Show the app and hide the loading screen
-                    document.getElementById('loading-container').classList.add('hidden');
-                    document.getElementById('app-container').classList.remove('hidden');
-                    document.body.classList.remove('hidden');
-
-                    // Start the main app logic with the fetched data
-                    initializeFocusApp(db, auth, user, initialData);
-
-                } catch (error) {
-                    console.error("Error fetching user data:", error);
-                    alert("Could not load your data from the cloud. Please try again.");
-                    // Redirect to login if data can't be fetched
-                    window.location.href = './index.html';
-                }
+                currentUser = user;
+                fetchUserDataAndInitialize();
             } else {
-                // No user is signed in. Redirect to the login page.
                 console.log("No user logged in, redirecting to index.html");
                 window.location.href = './index.html';
             }
