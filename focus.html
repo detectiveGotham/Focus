@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Mode</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS Variables for theming */
+        :root {
+            --font-family-sans: 'Roboto', sans-serif;
+            --font-family-mono: 'Orbitron', sans-serif;
+
+            /* Classic Theme */
+            --classic-bg: #f4f7f6;
+            --classic-surface-bg: #ffffff;
+            --classic-text: #333333;
+            --classic-primary: #4a90e2;
+            --classic-primary-text: #ffffff;
+            --classic-accent: #50e3c2;
+            --classic-border: #dddddd;
+            --classic-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --classic-heatmap-empty: #ebedf0;
+            --classic-heatmap-low: #9be9a8;
+            --classic-heatmap-medium: #40c463;
+            --classic-heatmap-high: #30a14e;
+            --classic-heatmap-very-high: #216e39;
+
+            /* Batman Theme */
+            --batman-bg: #0d1117;
+            --batman-surface-bg: #161b22;
+            --batman-text: #c9d1d9;
+            --batman-primary: #f0b90b;
+            --batman-primary-text: #0d1117;
+            --batman-accent: #f0b90b;
+            --batman-border: #30363d;
+            --batman-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --batman-heatmap-empty: #2d333b;
+            --batman-heatmap-low: #0e4429;
+            --batman-heatmap-medium: #006d32;
+            --batman-heatmap-high: #26a641;
+            --batman-heatmap-very-high: #39d353;
+        }
+
+        body {
+            font-family: var(--font-family-sans);
+            transition: background-color 0.3s, color 0.3s;
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 80px; /* Add padding to prevent content from being hidden by the bottom controls */
+            box-sizing: border-box;
+        }
+
+        .classic-theme {
+            background-color: var(--classic-bg);
+            color: var(--classic-text);
+        }
+
+        .batman-theme {
+            background-color: var(--batman-bg);
+            color: var(--batman-text);
+        }
+        
+        .header-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: auto;
+            margin-top: 50px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            border-radius: 12px;
+            padding: 20px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .classic-theme .card {
+            background-color: var(--classic-surface-bg);
+            border: 1px solid var(--classic-border);
+            box-shadow: var(--classic-shadow);
+        }
+
+        .batman-theme .card {
+            background-color: var(--batman-surface-bg);
+            border: 1px solid var(--batman-border);
+            box-shadow: var(--batman-shadow);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-family: var(--font-family-mono);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h2 .date-display {
+            font-size: 0.9rem;
+            font-family: var(--font-family-sans);
+            font-weight: 400;
+        }
+
+        [contenteditable="true"] {
+            cursor: text;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        [contenteditable="true"]:focus {
+            outline: 2px solid var(--classic-primary);
+        }
+        .batman-theme [contenteditable="true"]:focus {
+            outline: 2px solid var(--batman-primary);
+        }
+
+
+        /* Theme Switcher */
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        .classic-theme .slider { background-color: #ccc; }
+        .batman-theme .slider { background-color: var(--batman-primary); }
+
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* Timer Section */
+        #timer-display {
+            font-family: var(--font-family-mono);
+            font-size: 4rem;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 700;
+        }
+        
+        #progress-bar-container {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .classic-theme #progress-bar-container { background-color: var(--classic-border); }
+        .batman-theme #progress-bar-container { background-color: var(--batman-border); }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 5px;
+            transition: width 0.5s ease-out;
+        }
+        .classic-theme #progress-bar { background-color: var(--classic-primary); }
+        .batman-theme #progress-bar { background-color: var(--batman-primary); }
+
+
+        .timer-inputs, .timer-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .timer-inputs input {
+            width: 80px;
+            padding: 10px;
+            font-size: 1rem;
+            text-align: center;
+            border-radius: 8px;
+            border: 1px solid;
+        }
+
+        .classic-theme .timer-inputs input {
+            background-color: var(--classic-bg);
+            border-color: var(--classic-border);
+            color: var(--classic-text);
+        }
+
+        .batman-theme .timer-inputs input {
+            background-color: var(--batman-bg);
+            border-color: var(--batman-border);
+            color: var(--batman-text);
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        
+        button:active { transform: scale(0.98); }
+
+        .btn-primary { color: var(--classic-primary-text); }
+        .classic-theme .btn-primary { background-color: var(--classic-primary); }
+        .batman-theme .btn-primary { 
+            background-color: var(--batman-primary);
+            color: var(--batman-primary-text);
+        }
+
+        .btn-secondary { background-color: transparent; }
+
+        .classic-theme .btn-secondary {
+            border: 1px solid var(--classic-border);
+            color: var(--classic-text);
+        }
+        .batman-theme .btn-secondary {
+            border: 1px solid var(--batman-border);
+            color: var(--batman-text);
+        }
+
+        /* Checklist */
+        .task-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 250px;
+            padding-right: 10px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .task-item input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
+
+        .task-item input[type="text"] {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid;
+            flex-grow: 1;
+        }
+        
+        .task-item .task-timer { font-family: var(--font-family-mono); font-size: 0.9rem; min-width: 60px; text-align: right;}
+        .task-item button { padding: 5px 10px; font-size: 0.8rem; }
+
+        .classic-theme .task-item input[type="text"] {
+            background-color: var(--classic-bg);
+            border-color: var(--classic-border);
+            color: var(--classic-text);
+        }
+        .batman-theme .task-item input[type="text"] {
+            background-color: var(--batman-bg);
+            border-color: var(--batman-border);
+            color: var(--batman-text);
+        }
+        
+        /* Heatmap & Stats Section */
+        .heatmap-wrapper {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+        .heatmap-body {
+            display: flex;
+        }
+        .heatmap-scroll-area {
+            overflow-x: auto;
+            flex-grow: 1;
+        }
+        .heatmap-months {
+            display: flex;
+            margin-bottom: 5px;
+            padding-left: 1px; /* Small padding to align with grid */
+        }
+        .heatmap-month {
+            min-width: calc((15px + 4px) * 4.3); /* (day width + gap) * ~weeks in month */
+            font-size: 0.8rem;
+            text-align: left;
+        }
+        .heatmap-days-of-week {
+            display: grid;
+            grid-template-rows: repeat(7, 1fr);
+            gap: 4px;
+            padding: 24px 5px 0 5px; /* Add padding to align with grid */
+            flex-shrink: 0;
+        }
+        .heatmap-day-label {
+            font-size: 0.7rem;
+            width: 20px;
+            text-align: center;
+            height: 15px; /* Match heatmap day height */
+            line-height: 15px; /* Center text vertically */
+        }
+        .heatmap-container {
+            display: grid;
+            grid-template-rows: repeat(7, 1fr);
+            grid-auto-flow: column;
+            gap: 4px;
+        }
+
+        .heatmap-day {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .heatmap-day.today {
+            border-color: var(--classic-primary);
+        }
+        .batman-theme .heatmap-day.today {
+            border-color: var(--batman-primary);
+        }
+        
+        .classic-theme .heatmap-day { background-color: var(--classic-heatmap-empty); }
+        .batman-theme .heatmap-day { background-color: var(--batman-heatmap-empty); }
+
+        .heatmap-day[data-level="1"] { background-color: var(--classic-heatmap-low); }
+        .heatmap-day[data-level="2"] { background-color: var(--classic-heatmap-medium); }
+        .heatmap-day[data-level="3"] { background-color: var(--classic-heatmap-high); }
+        .heatmap-day[data-level="4"] { background-color: var(--classic-heatmap-very-high); }
+        
+        .batman-theme .heatmap-day[data-level="1"] { background-color: var(--batman-heatmap-low); }
+        .batman-theme .heatmap-day[data-level="2"] { background-color: var(--batman-heatmap-medium); }
+        .batman-theme .heatmap-day[data-level="3"] { background-color: var(--batman-heatmap-high); }
+        .batman-theme .heatmap-day[data-level="4"] { background-color: var(--batman-heatmap-very-high); }
+
+        .heatmap-day .tooltip {
+            visibility: hidden;
+            width: 160px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -80px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .heatmap-day:hover .tooltip { visibility: visible; opacity: 1; }
+        
+        .stats-container {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid;
+            font-size: 0.9rem;
+        }
+        .classic-theme .stats-container { border-color: var(--classic-border); }
+        .batman-theme .stats-container { border-color: var(--batman-border); }
+
+        .stats-container p {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .stats-container span { font-weight: bold; }
+
+        /* Sound Mixer */
+        #sound-mixer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #sound-mixer-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .sound-mixer-panel {
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .classic-theme .sound-mixer-panel {
+            background-color: var(--classic-surface-bg);
+        }
+        .batman-theme .sound-mixer-panel {
+            background-color: var(--batman-surface-bg);
+        }
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 20px;
+        }
+        .sound-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .sound-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid;
+        }
+        .classic-theme .sound-icon {
+            border-color: var(--classic-border);
+            color: var(--classic-text);
+        }
+        .batman-theme .sound-icon {
+            border-color: var(--batman-border);
+            color: var(--batman-text);
+        }
+        .sound-icon.active {
+            transform: scale(1.1);
+        }
+        .classic-theme .sound-icon.active {
+            background-color: var(--classic-primary);
+            color: var(--classic-primary-text);
+            border-color: var(--classic-primary);
+        }
+        .batman-theme .sound-icon.active {
+            background-color: var(--batman-primary);
+            color: var(--batman-primary-text);
+            border-color: var(--batman-primary);
+        }
+        .sound-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: currentColor;
+        }
+        .sound-control .volume-slider {
+            width: 100%;
+            height: 5px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+        .sound-control .volume-slider.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Bottom Controls */
+        .bottom-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            z-index: 100;
+            border-top: 1px solid;
+        }
+        .classic-theme .bottom-controls {
+            background-color: var(--classic-bg);
+            border-color: var(--classic-border);
+        }
+        .batman-theme .bottom-controls {
+            background-color: var(--batman-bg);
+            border-color: var(--batman-border);
+        }
+
+        .bottom-controls > * {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+
+    </style>
+</head>
+<body class="hidden"> <!-- NEW: Body is hidden by default to prevent flash of unstyled content -->
+
+    <div class="header-controls">
+        <label class="theme-switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- NEW: Loading container -->
+    <div id="loading-container" class="w-screen h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <p class="text-2xl text-gray-500 animate-pulse">Loading Focus Mode...</p>
+    </div>
+
+    <div id="app-container" class="app-container hidden"> <!-- NEW: App container is hidden by default -->
+        <!-- Timer Card -->
+        <div class="card">
+            <h2>Focus Timer</h2>
+            <div id="timer-display">00:00:00</div>
+            <div id="progress-bar-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div class="timer-inputs">
+                <input type="number" id="hours-input" placeholder="Hours" min="0">
+                <input type="number" id="minutes-input" placeholder="Minutes" min="0" max="59">
+            </div>
+            <div class="timer-controls">
+                <button id="start-btn" class="btn-primary">Start</button>
+                <button id="pause-btn" class="btn-secondary" style="display:none;">Pause</button>
+                <button id="reset-btn" class="btn-secondary" style="display:none;">Reset</button>
+                <button id="done-btn" class="btn-primary" style="display:none;">Done</button>
+            </div>
+             <div class="timer-controls" style="margin-top: auto; margin-bottom: 0;">
+                <button id="save-data-btn" class="btn-secondary">Save Data</button>
+            </div>
+        </div>
+
+        <!-- General Checklist Card -->
+        <div class="card">
+            <h2><span id="checklist-title" contenteditable="true">General Checklist</span></h2>
+            <div id="general-tasks-list" class="task-list"></div>
+            <div class="timer-controls" style="justify-content: flex-start; margin-top: auto;">
+                <button id="add-general-task-btn" class="btn-secondary">Add Task</button>
+                <button id="clear-completed-btn" class="btn-secondary">Clear Completed</button>
+            </div>
+        </div>
+
+        <!-- Heatmaps Card -->
+        <div class="card full-width">
+            <h2>Checklist History <span id="checklist-heatmap-date" class="date-display"></span></h2>
+            <div class="heatmap-wrapper">
+                <div class="heatmap-body">
+                    <div class="heatmap-days-of-week" id="heatmap-days-of-week-container-left"></div>
+                    <div class="heatmap-scroll-area">
+                        <div class="heatmap-months" id="heatmap-months-container"></div>
+                        <div class="heatmap-container" id="checklist-heatmap"></div>
+                    </div>
+                    <div class="heatmap-days-of-week" id="heatmap-days-of-week-container-right"></div>
+                </div>
+            </div>
+            <div class="stats-container" id="checklist-stats"></div>
+        </div>
+    </div>
+    
+    <div class="bottom-controls">
+        <!-- MODIFIED: Link is now relative -->
+        <a href="./index.html" class="btn-secondary">Back to Main</a>
+        <button id="sound-mixer-btn" class="btn-secondary">Sounds</button>
+    </div>
+    
+    <!-- Sound Mixer Modal -->
+    <div id="sound-mixer-modal">
+        <div class="sound-mixer-panel">
+            <div class="sound-grid" id="sound-grid">
+                <!-- Sound controls will be injected here by JS -->
+            </div>
+            <button id="close-mixer-btn" class="btn-primary" style="align-self: center;">Close</button>
+        </div>
+    </div>
+
+    <!-- NEW: Firebase SDK script -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAupZMTnCqwyz7WEGcA8pJS1r0nnYA6bMk",
+            authDomain: "checkmeout-b57f2.firebaseapp.com",
+            projectId: "checkmeout-b57f2",
+            storageBucket: "checkmeout-b57f2.appspot.com",
+            messagingSenderId: "199208936999",
+            appId: "1:199208936999:web:56db3d05695e158d0bd002",
+            measurementId: "G-S6T4G00G7F"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- Main App Logic ---
+        // This function holds all the original application logic.
+        // It's called only after we confirm a user is logged in.
+        function initializeFocusApp(db, auth, user, initialData) {
+            // --- DOM Elements ---
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
+            const timerDisplay = document.getElementById('timer-display');
+            const progressBar = document.getElementById('progress-bar');
+            const hoursInput = document.getElementById('hours-input');
+            const minutesInput = document.getElementById('minutes-input');
+            const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const doneBtn = document.getElementById('done-btn');
+            const saveDataBtn = document.getElementById('save-data-btn');
+            const checklistTitle = document.getElementById('checklist-title');
+            const generalTasksList = document.getElementById('general-tasks-list');
+            const addGeneralTaskBtn = document.getElementById('add-general-task-btn');
+            const clearCompletedBtn = document.getElementById('clear-completed-btn');
+            const checklistHeatmapContainer = document.getElementById('checklist-heatmap');
+            const heatmapMonthsContainer = document.getElementById('heatmap-months-container');
+            const heatmapDaysOfWeekContainerLeft = document.getElementById('heatmap-days-of-week-container-left');
+            const heatmapDaysOfWeekContainerRight = document.getElementById('heatmap-days-of-week-container-right');
+            const checklistHeatmapDate = document.getElementById('checklist-heatmap-date');
+            const checklistStatsContainer = document.getElementById('checklist-stats');
+            const soundMixerBtn = document.getElementById('sound-mixer-btn');
+            const soundMixerModal = document.getElementById('sound-mixer-modal');
+            const closeMixerBtn = document.getElementById('close-mixer-btn');
+            const soundGrid = document.getElementById('sound-grid');
+
+            // --- State Management ---
+            let mainTimer, generalTasks, focusHistory, checklistHistory, theme, checklistTitleText;
+            
+            // Default state for the focus page
+            const defaultFocusState = {
+                theme: 'classic',
+                checklistTitleText: 'General Checklist',
+                mainTimer: { interval: null, totalSeconds: 0, secondsRemaining: 0, timeSpent: 0, isPaused: false, isActive: false, endTime: 0 },
+                generalTasks: [],
+                focusHistory: {},
+                checklistHistory: {}
+            };
+
+            // --- NEW: Load state from the data passed by the auth listener ---
+            function loadState() {
+                // The `initialData` object is the full user document from Firestore.
+                // We look for a `focusState` property inside it.
+                const savedFocusState = initialData.focusState || {};
+                
+                // Merge saved state with defaults to prevent errors if new properties are added
+                const mergedState = { ...defaultFocusState, ...savedFocusState };
+
+                theme = mergedState.theme;
+                checklistTitleText = mergedState.checklistTitleText;
+                mainTimer = mergedState.mainTimer;
+                generalTasks = mergedState.generalTasks;
+                focusHistory = mergedState.focusHistory;
+                checklistHistory = mergedState.checklistHistory;
+            }
+
+            // --- NEW: Save state back to Firestore ---
+            const saveState = async (showNotification = false) => {
+                if (!user) return; // Don't save if there's no user
+                
+                const focusState = {
+                    theme,
+                    checklistTitleText,
+                    mainTimer,
+                    generalTasks,
+                    focusHistory,
+                    checklistHistory
+                };
+
+                try {
+                    const userDocRef = doc(db, "user_data", user.uid);
+                    // Use { merge: true } to avoid overwriting the main checklist data from index.html
+                    await setDoc(userDocRef, { focusState: focusState }, { merge: true });
+
+                    if (showNotification) {
+                        const originalText = saveDataBtn.textContent;
+                        saveDataBtn.textContent = 'Saved!';
+                        setTimeout(() => { saveDataBtn.textContent = originalText; }, 1500);
+                    }
+                } catch (e) {
+                    console.error("Error saving focus state to Firestore:", e);
+                    alert("Could not save focus data to the cloud.");
+                }
+            };
+            
+            // --- The rest of your original JS logic remains largely the same ---
+            // It just uses the state variables defined above instead of reading from localStorage.
+            
+            const init = () => {
+                loadState(); // Load the state from the initial data
+                initSoundMixer();
+                renderAll();
+                // Handle a timer that was running when the page was closed
+                if (mainTimer.isActive) {
+                    handleTimerOnLoad();
+                }
+            };
+            
+            const renderAll = () => {
+                updateThemeUI();
+                updateTimerDisplay();
+                renderGeneralTasks();
+                renderChecklistHeatmap();
+                updateUI();
+                calculateAndDisplayStats();
+                checklistTitle.textContent = checklistTitleText;
+            };
+
+            // --- Theme Management ---
+            function updateThemeUI() {
+                const isBatman = theme === 'batman';
+                body.classList.toggle('batman-theme', isBatman);
+                body.classList.toggle('classic-theme', !isBatman);
+                themeToggle.checked = isBatman;
+            }
+            
+            themeToggle.addEventListener('change', () => {
+                theme = themeToggle.checked ? 'batman' : 'classic';
+                renderAll();
+                saveState();
+            });
+
+            // --- Main Timer Logic ---
+            const handleTimerOnLoad = () => {
+                const newSecondsRemaining = Math.max(0, Math.floor((mainTimer.endTime - Date.now()) / 1000));
+                const secondsElapsed = mainTimer.secondsRemaining - newSecondsRemaining;
+                mainTimer.timeSpent += secondsElapsed;
+                mainTimer.secondsRemaining = newSecondsRemaining;
+
+                if (mainTimer.isPaused) {
+                    updateUI();
+                    updateTimerDisplay();
+                    return;
+                }
+
+                if (mainTimer.secondsRemaining <= 0) {
+                    handleTimerCompletion(true);
+                } else {
+                    startTimer(true);
+                }
+            };
+            
+            const updateTimerDisplay = () => {
+                const hours = Math.floor(mainTimer.secondsRemaining / 3600);
+                const minutes = Math.floor((mainTimer.secondsRemaining % 3600) / 60);
+                const seconds = mainTimer.secondsRemaining % 60;
+                timerDisplay.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                updateProgressBar();
+            };
+
+            const updateProgressBar = () => {
+                if (mainTimer.totalSeconds > 0) {
+                    const percentage = (mainTimer.secondsRemaining / mainTimer.totalSeconds) * 100;
+                    progressBar.style.width = `${percentage}%`;
+                } else {
+                    progressBar.style.width = '0%';
+                }
+            };
+
+            const startTimer = (isResuming = false) => {
+                if (!isResuming) {
+                    const hours = parseInt(hoursInput.value) || 0;
+                    const minutes = parseInt(minutesInput.value) || 0;
+                    mainTimer.totalSeconds = (hours * 3600) + (minutes * 60);
+                    if (mainTimer.totalSeconds <= 0) return;
+                    mainTimer.secondsRemaining = mainTimer.totalSeconds;
+                    mainTimer.timeSpent = 0;
+                }
+                
+                mainTimer.isActive = true;
+                mainTimer.isPaused = false;
+                mainTimer.endTime = Date.now() + mainTimer.secondsRemaining * 1000;
+
+                clearInterval(mainTimer.interval);
+                mainTimer.interval = setInterval(() => {
+                    if (mainTimer.secondsRemaining > 0) {
+                        mainTimer.secondsRemaining--;
+                        mainTimer.timeSpent++;
+                        updateTimerDisplay();
+                    } else {
+                        handleTimerCompletion();
+                    }
+                }, 1000);
+                updateUI();
+                saveState(); // Save timer state when it starts
+            };
+
+            const pauseTimer = () => {
+                mainTimer.isPaused = !mainTimer.isPaused;
+                if (mainTimer.isPaused) {
+                    clearInterval(mainTimer.interval);
+                } else {
+                    mainTimer.endTime = Date.now() + mainTimer.secondsRemaining * 1000;
+                    startTimer(true);
+                }
+                updateUI();
+                saveState();
+            };
+
+            const resetTimer = () => {
+                clearInterval(mainTimer.interval);
+                mainTimer = { ...defaultFocusState.mainTimer };
+                renderAll();
+                saveState();
+            };
+
+            const handleTimerCompletion = (silent = false) => {
+                 clearInterval(mainTimer.interval);
+                 if (!silent) {
+                    timerDisplay.textContent = "Time's Up!";
+                    setTimeout(() => {
+                        saveFocusHistory(mainTimer.timeSpent);
+                        resetTimer();
+                    }, 1000);
+                 } else {
+                    saveFocusHistory(mainTimer.totalSeconds);
+                    resetTimer();
+                 }
+            };
+
+            const completeSessionEarly = () => {
+                clearInterval(mainTimer.interval);
+                saveFocusHistory(mainTimer.timeSpent);
+                resetTimer();
+            };
+
+            const updateUI = () => {
+                const isActive = mainTimer.isActive;
+                startBtn.style.display = isActive ? 'none' : 'inline-block';
+                hoursInput.disabled = isActive;
+                minutesInput.disabled = isActive;
+                pauseBtn.style.display = isActive ? 'inline-block' : 'none';
+                resetBtn.style.display = isActive ? 'inline-block' : 'none';
+                doneBtn.style.display = isActive ? 'inline-block' : 'none';
+                pauseBtn.textContent = mainTimer.isPaused ? 'Resume' : 'Pause';
+            };
+
+            // --- Task Logic ---
+            const createTimeDisplay = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            };
+
+            const renderGeneralTasks = () => {
+                generalTasksList.innerHTML = '';
+                generalTasks.forEach(task => {
+                    const taskEl = document.createElement('div');
+                    taskEl.className = 'task-item';
+                    taskEl.innerHTML = `
+                        <input type="checkbox" data-id="${task.id}" ${task.completed ? 'checked' : ''}>
+                        <input type="text" placeholder="Task description" value="${task.text}" data-id="${task.id}">
+                        <span class="task-timer">${createTimeDisplay(task.timeSpent)}</span>
+                        <button class="btn-secondary" data-id="${task.id}" data-action="toggle">${task.isActive ? 'Stop' : 'Start'}</button>
+                        <button class="btn-secondary" data-id="${task.id}" data-action="delete">-</button>
+                    `;
+                    generalTasksList.appendChild(taskEl);
+                });
+            };
+
+            const addGeneralTask = () => {
+                generalTasks.push({ id: Date.now(), text: '', completed: false, timeSpent: 0, isActive: false, intervalId: null });
+                renderGeneralTasks();
+                saveState();
+            };
+
+            const updateGeneralTask = (id, field, value) => {
+                const task = generalTasks.find(t => t.id === id);
+                if (task) {
+                    const wasCompleted = task.completed;
+                    task[field] = value;
+                    if (field === 'completed' && wasCompleted !== value) {
+                        if (value) { 
+                            if (task.isActive) toggleGeneralTaskTimer(id);
+                            saveChecklistHistory(true);
+                        } else {
+                             saveChecklistHistory(false);
+                        }
+                    }
+                }
+                renderGeneralTasks();
+                saveState();
+            };
+            
+            const deleteGeneralTask = (id) => {
+                generalTasks = generalTasks.filter(t => t.id !== id);
+                renderGeneralTasks();
+                saveState();
+            };
+            
+            const clearCompletedTasks = () => {
+                generalTasks = generalTasks.filter(task => !task.completed);
+                renderGeneralTasks();
+                saveState();
+            };
+
+            const toggleGeneralTaskTimer = (id) => {
+                const task = generalTasks.find(t => t.id === id);
+                if (!task || task.completed) return;
+
+                task.isActive = !task.isActive;
+                if (task.isActive) {
+                    task.intervalId = setInterval(() => {
+                        task.timeSpent++;
+                        renderGeneralTasks();
+                    }, 1000);
+                } else {
+                    clearInterval(task.intervalId);
+                    task.intervalId = null;
+                }
+                renderGeneralTasks();
+                saveState();
+            };
+
+            generalTasksList.addEventListener('change', e => {
+                const id = parseInt(e.target.dataset.id);
+                if (e.target.type === 'checkbox') {
+                    updateGeneralTask(id, 'completed', e.target.checked);
+                }
+            });
+
+            generalTasksList.addEventListener('input', e => {
+                const id = parseInt(e.target.dataset.id);
+                 if (e.target.type === 'text') {
+                    const task = generalTasks.find(t => t.id === id);
+                    if (task) task.text = e.target.value;
+                }
+            });
+            generalTasksList.addEventListener('focusout', () => saveState()); // Save when user clicks away from a task input
+
+            generalTasksList.addEventListener('click', e => {
+                if (e.target.tagName !== 'BUTTON') return;
+                const id = parseInt(e.target.dataset.id);
+                const action = e.target.dataset.action;
+                if (action === 'toggle') toggleGeneralTaskTimer(id);
+                if (action === 'delete') deleteGeneralTask(id);
+            });
+
+            // --- History & Stats Logic ---
+            const saveFocusHistory = (seconds) => {
+                const today = new Date().toISOString().split('T')[0];
+                const minutes = Math.floor(seconds / 60);
+                if (minutes > 0) {
+                    focusHistory[today] = (focusHistory[today] || 0) + minutes;
+                    saveState();
+                }
+            };
+
+            const saveChecklistHistory = (isIncrement) => {
+                 const today = new Date().toISOString().split('T')[0];
+                 let currentCount = checklistHistory[today] || 0;
+                 currentCount = isIncrement ? currentCount + 1 : Math.max(0, currentCount - 1);
+                 if (currentCount > 0) {
+                    checklistHistory[today] = currentCount;
+                 } else {
+                    delete checklistHistory[today];
+                 }
+                 renderAll();
+                 saveState();
+            };
+
+            const calculateAndDisplayStats = () => {
+                let weeklyTasks = 0;
+                let totalTasks = 0;
+                for (const dateStr in checklistHistory) {
+                    const date = new Date(dateStr);
+                    const today = new Date();
+                    const diffTime = today - date;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                     if (diffDays <= 7) {
+                        weeklyTasks += checklistHistory[dateStr];
+                    }
+                    totalTasks += checklistHistory[dateStr];
+                }
+                checklistStatsContainer.innerHTML = `
+                    <p>Last 7 Days: <span>${weeklyTasks} tasks</span></p>
+                    <p>Overall: <span>${totalTasks} tasks</span></p>
+                `;
+            };
+
+            const renderChecklistHeatmap = () => {
+                const container = checklistHeatmapContainer;
+                const monthsContainer = heatmapMonthsContainer;
+                const data = checklistHistory;
+                const unit = 'tasks';
+                const dateEl = checklistHeatmapDate;
+
+                container.innerHTML = '';
+                monthsContainer.innerHTML = '';
+                heatmapDaysOfWeekContainerLeft.innerHTML = '';
+                heatmapDaysOfWeekContainerRight.innerHTML = '';
+                
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0];
+                dateEl.textContent = today.toLocaleString('default', { dateStyle: 'long' });
+
+                const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                const dayLabelsHtml = days.map(d => `<div class="heatmap-day-label">${d}</div>`).join('');
+                heatmapDaysOfWeekContainerLeft.innerHTML = dayLabelsHtml;
+                heatmapDaysOfWeekContainerRight.innerHTML = dayLabelsHtml;
+
+
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setFullYear(endDate.getFullYear() - 1);
+                
+                let date = new Date(startDate);
+                date.setDate(date.getDate() - date.getDay());
+
+                let lastMonth = -1;
+                while (date <= endDate) {
+                    if (date.getMonth() !== lastMonth) {
+                        const monthEl = document.createElement('div');
+                        monthEl.className = 'heatmap-month';
+                        monthEl.textContent = date.toLocaleString('default', { month: 'short' });
+                        monthsContainer.appendChild(monthEl);
+                        lastMonth = date.getMonth();
+                    }
+
+                    const dateString = date.toISOString().split('T')[0];
+                    const dayEl = document.createElement('div');
+                    dayEl.classList.add('heatmap-day');
+                    if (dateString === todayString) {
+                        dayEl.classList.add('today');
+                    }
+                    
+                    const value = data[dateString] || 0;
+                    let level = 0;
+                    if (value > 0) {
+                        const thresholds = [2, 4, 6];
+                        if (value <= thresholds[0]) level = 1;
+                        else if (value <= thresholds[1]) level = 2;
+                        else if (value <= thresholds[2]) level = 3;
+                        else level = 4;
+                    }
+                    
+                    if (level > 0) dayEl.dataset.level = level;
+
+                    dayEl.innerHTML = `<span class="tooltip">${value} ${unit} on ${date.toDateString()}</span>`;
+                    container.appendChild(dayEl);
+                    date.setDate(date.getDate() + 1);
+                }
+            };
+            
+            // --- Sound Mixer Logic ---
+            const soundLibrary = {
+                rain: { name: "Rain", icon: `<svg viewBox="0 0 24 24"><path d="M12,2A9,9,0,0,0,3,11c0,4.28,3,7.84,7,8.79V12a2,2,0,0,1,2-2h0a2,2,0,0,1,2,2v7.79c4-0.95,7-4.51,7-8.79A9,9,0,0,0,12,2ZM8,16a1,1,0,0,1-2,0V13a1,1,0,0,1,2,0Zm4,2a1,1,0,0,1-2,0V14a1,1,0,0,1,2,0Zm4-3a1,1,0,0,1-2,0V12a1,1,0,0,1,2,0Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(1000, "lowpass"); const player = new Tone.Noise("pink").connect(finalNode); return { player, finalNode, otherNodes: [] }; } },
+                wind: { name: "Wind", icon: `<svg viewBox="0 0 24 24"><path d="M19.5,6A2.5,2.5,0,0,0,17,8.5a2.42,2.42,0,0,0,0,.31,3.5,3.5,0,0,0-3.5-3.5,3.44,3.44,0,0,0-1.46.33A4.5,4.5,0,0,0,7.5,10H3a1,1,0,0,0,0,2H7.5a4.41,4.41,0,0,0,0.29.0A4.5,4.5,0,0,0,12,14.5a4.44,4.44,0,0,0,1.46-.33,3.5,3.5,0,0,0,3.5,3.5,3.42,3.42,0,0,0,.5,0,2.5,2.5,0,0,0,2.5,2.5,2.5,2.5,0,0,0,0-5,2.42,2.42,0,0,0,0-.31,3.5,3.5,0,0,0,3.5-3.5,3.44,3.44,0,0,0-1.46-.33A4.5,4.5,0,0,0,19.5,6Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(400, "lowpass"); const lfo = new Tone.LFO("0.2", 200, 600).connect(finalNode.frequency).start(); const player = new Tone.Noise("brown").connect(finalNode); return { player, finalNode, otherNodes: [lfo] }; } },
+                fire: { name: "Fire", icon: `<svg viewBox="0 0 24 24"><path d="M13.2,4.32a9.1,9.1,0,0,0-5.83,4.43,4.38,4.38,0,0,1,.43,2.68,4.49,4.49,0,0,1-3.1,4.11,7.5,7.5,0,0,0,1.4,2.36c.64.71,1.24,1,2.2,1.19A8.43,8.43,0,0,0,12,22a8.43,8.43,0,0,0,3.7-.81c.92-.19,1.52-.48,2.16-1.19a7.5,7.5,0,0,0,1.4-2.36,4.49,4.49,0,0,1-3.1-4.11,4.38,4.38,0,0,1,.43-2.68A9.1,9.1,0,0,0,13.2,4.32Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(2000, "highpass"); const lpFilter = new Tone.Filter(700, "lowpass").connect(finalNode); const player = new Tone.Noise("white").connect(lpFilter); return { player, finalNode, otherNodes: [lpFilter] }; } },
+                coffee: { name: "Cafe", icon: `<svg viewBox="0 0 24 24"><path d="M18,6H6A3,3,0,0,0,3,9v6a3,3,0,0,0,3,3h8a3,3,0,0,0,3-3V9A3,3,0,0,0,18,6ZM8,14H6V12H8Zm0-3H6V9H8Zm4,3H10V12h2Zm0-3H10V9h2Zm4,3H14V12h2Zm0-3H14V9h2Zm2-5a1,1,0,0,1,1,1V15a1,1,0,0,1-2,0V7A1,1,0,0,1,20,6Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(800, "bandpass"); const player = new Tone.Noise("pink").connect(finalNode); return { player, finalNode, otherNodes: [] }; } }
+            };
+            let mixerState = {};
+
+            const initSoundMixer = () => {
+                soundGrid.innerHTML = '';
+                for (const key in soundLibrary) {
+                    const sound = soundLibrary[key];
+                    mixerState[key] = { player: null, finalNode: null, otherNodes: [], isPlaying: false, volume: null };
+
+                    const controlEl = document.createElement('div');
+                    controlEl.className = 'sound-control';
+                    controlEl.innerHTML = `
+                        <div class="sound-icon" data-sound="${key}" title="${sound.name}">${sound.icon}</div>
+                        <input type="range" class="volume-slider" data-sound="${key}" min="0" max="1" step="0.01" value="0.7">
+                    `;
+                    soundGrid.appendChild(controlEl);
+                }
+            };
+
+            const toggleSound = async (key) => {
+                await Tone.start();
+                const state = mixerState[key];
+                const icon = document.querySelector(`.sound-icon[data-sound="${key}"]`);
+                const slider = document.querySelector(`.volume-slider[data-sound="${key}"]`);
+
+                if (state.isPlaying) {
+                    state.player.stop();
+                    state.player.dispose();
+                    state.finalNode.dispose();
+                    state.otherNodes.forEach(node => node.dispose());
+                    state.volume.dispose();
+                    state.isPlaying = false;
+                    state.player = null;
+                    state.finalNode = null;
+                    state.otherNodes = [];
+                    state.volume = null;
+                    icon.classList.remove('active');
+                    slider.classList.remove('visible');
+                } else {
+                    const { player, finalNode, otherNodes } = soundLibrary[key].factory();
+                    state.player = player;
+                    state.finalNode = finalNode;
+                    state.otherNodes = otherNodes;
+                    state.volume = new Tone.Volume(0).toDestination();
+                    state.finalNode.connect(state.volume);
+                    const volumeValue = parseFloat(slider.value);
+                    const dB = volumeValue === 0 ? -Infinity : (volumeValue * 40) - 40;
+                    state.volume.volume.value = dB;
+                    state.player.start();
+                    state.isPlaying = true;
+                    icon.classList.add('active');
+                    slider.classList.add('visible');
+                }
+            };
+
+            soundGrid.addEventListener('click', (e) => {
+                const icon = e.target.closest('.sound-icon');
+                if (icon) {
+                    toggleSound(icon.dataset.sound);
+                }
+            });
+            
+            soundGrid.addEventListener('input', (e) => {
+                const slider = e.target.closest('.volume-slider');
+                if(slider) {
+                    const key = slider.dataset.sound;
+                    const state = mixerState[key];
+                    if (state.isPlaying && state.volume) {
+                        const volumeValue = parseFloat(slider.value);
+                        const dB = volumeValue === 0 ? -Infinity : (volumeValue * 40) - 40;
+                        state.volume.volume.value = dB;
+                    }
+                }
+            });
+
+            soundMixerBtn.addEventListener('click', () => soundMixerModal.classList.add('visible'));
+            closeMixerBtn.addEventListener('click', () => soundMixerModal.classList.remove('visible'));
+            soundMixerModal.addEventListener('click', (e) => {
+                if (e.target === soundMixerModal) {
+                    soundMixerModal.classList.remove('visible');
+                }
+            });
+
+            // --- Event Listeners ---
+            startBtn.addEventListener('click', () => startTimer(false));
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            doneBtn.addEventListener('click', completeSessionEarly);
+            addGeneralTaskBtn.addEventListener('click', addGeneralTask);
+            clearCompletedBtn.addEventListener('click', clearCompletedTasks);
+            saveDataBtn.addEventListener('click', () => saveState(true));
+            checklistTitle.addEventListener('blur', () => {
+                checklistTitleText = checklistTitle.textContent;
+                saveState();
+            });
+            window.addEventListener('beforeunload', () => saveState(false));
+
+            // --- Initial Call ---
+            init();
+        }
+
+        // --- NEW: Authentication Entry Point ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is logged in. Fetch their data.
+                const userDocRef = doc(db, "user_data", user.uid);
+                try {
+                    const docSnap = await getDoc(userDocRef);
+                    let initialData = {};
+                    if (docSnap.exists()) {
+                        initialData = docSnap.data();
+                    }
+                    
+                    // Show the app and hide the loading screen
+                    document.getElementById('loading-container').classList.add('hidden');
+                    document.getElementById('app-container').classList.remove('hidden');
+                    document.body.classList.remove('hidden');
+
+                    // Start the main app logic with the fetched data
+                    initializeFocusApp(db, auth, user, initialData);
+
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                    alert("Could not load your data from the cloud. Please try again.");
+                    // Redirect to login if data can't be fetched
+                    window.location.href = './index.html';
+                }
+            } else {
+                // No user is signed in. Redirect to the login page.
+                console.log("No user logged in, redirecting to index.html");
+                window.location.href = './index.html';
+            }
+        });
+    </script>
+</body>
+</html>
