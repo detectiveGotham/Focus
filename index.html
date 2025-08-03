@@ -142,16 +142,15 @@
                     <div class="flex justify-around items-center">
                         <div class="text-center">
                             <div id="achievement-badge" class="w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110">
-                                <span id="badge-level">0</span>
+                                <!-- Thematic Icon and Count will be inserted here -->
                             </div>
-                            <p class="text-xs text-secondary">Minor Badges</p>
+                            <p id="minor-badge-name" class="text-xs text-secondary font-bold"></p>
                         </div>
                         <div class="text-center">
                             <div id="grand-badge" class="w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110">
-                                <span id="grand-badge-icon">🏆</span>
-                                <span id="grand-badge-level">0</span>
+                                <!-- Thematic Icon and Count will be inserted here -->
                             </div>
-                            <p class="text-xs text-secondary">Grand Badges</p>
+                            <p id="grand-badge-name" class="text-xs text-secondary font-bold"></p>
                         </div>
                     </div>
                     <p id="main-quote" class="text-center text-secondary italic mt-4" contenteditable="true">"The secret of getting ahead is getting started."</p>
@@ -307,6 +306,25 @@
                 batman: ["It's not who I am underneath, but what I do that defines me.", "I'm Batman.", "All men have limits. They learn what they are and learn not to exceed them. I ignore mine.", "A hero can be anyone.", "Why do we fall? So that we can learn to pick ourselves up."]
             };
 
+            const badgeInfo = {
+                classic: {
+                    minor: { name: 'Milestones', icon: (count) => `<span>${count}</span>` },
+                    grand: { name: 'Completions', icon: (count) => `<span>🏆</span><span>${count}</span>` }
+                },
+                'wonder-woman': {
+                    minor: { name: 'Victories', icon: (count) => `<span>${count}</span>` },
+                    grand: { name: 'Triumphs', icon: (count) => `<span>⭐</span><span>${count}</span>` }
+                },
+                'iron-man': {
+                    minor: { name: 'Upgrades', icon: (count) => `<span>${count}</span>` },
+                    grand: { name: 'Protocols', icon: (count) => `<span>⚙️</span><span>${count}</span>` }
+                },
+                batman: {
+                    minor: { name: 'Cases Solved', icon: (count) => `<span>${count}</span>` },
+                    grand: { name: 'Missions', icon: (count) => `<span>🦇</span><span>${count}</span>` }
+                }
+            };
+
             // Firebase Auth Listener
             onAuthStateChanged(auth, (user) => {
                 if (user) {
@@ -338,7 +356,6 @@
                             saveState();
                         }
                         
-                        // Render the full UI with the loaded state
                         renderFullUI();
 
                         loadingContainer.classList.replace('flex', 'hidden');
@@ -531,18 +548,14 @@
                     const parentIndices = indices.slice(0, i);
                     const parent = getItemByIndices(parentIndices);
                     const progress = calculateProgress(parent);
-                    if (progress.completed === progress.total) {
-                        parent.completed = true;
-                    } else {
-                        parent.completed = false;
-                    }
+                    parent.completed = progress.completed === progress.total;
                 }
             }
 
             // --- REWORKED: Gamification and Achievements ---
             function updateAchievements(indices) {
                 const themeAchievements = state.achievements[state.currentTheme];
-                const oldMinorBadges = themeAchievements.minorBadges;
+                const oldMinorBadges = themeAchievements.minorBadges || 0;
 
                 let totalCompletedCount = 0;
                 function countCompleted(items) {
@@ -556,33 +569,43 @@
                 const newMinorBadges = Math.floor(totalCompletedCount / 10);
                 if (newMinorBadges > oldMinorBadges) {
                     themeAchievements.minorBadges = newMinorBadges;
-                    showLevelUpModal(`You've earned Minor Badge #${newMinorBadges}!`);
+                    const badgeName = badgeInfo[state.currentTheme].minor.name;
+                    showLevelUpModal(`You've earned ${badgeName} #${newMinorBadges}!`);
                 }
 
                 const subject = getItemByIndices([indices[0]]);
                 const progress = calculateProgress(subject);
-                if (progress.completed === progress.total && !subject.badgeAwarded) {
+                if (progress.completed > 0 && progress.completed === progress.total && !subject.badgeAwarded) {
                     subject.badgeAwarded = true;
                     themeAchievements.grandBadges = (themeAchievements.grandBadges || 0) + 1;
-                    showLevelUpModal(`GRAND BADGE UNLOCKED!`, 'GRAND ACHIEVEMENT!');
+                    const badgeName = badgeInfo[state.currentTheme].grand.name;
+                    showLevelUpModal(`${badgeName} UNLOCKED!`, 'MAJOR ACHIEVEMENT!');
                 }
                 
                 updateBadgeUI();
             }
 
             function updateBadgeUI() {
-                const themeAchievements = state.achievements[state.currentTheme];
-                document.getElementById('badge-level').textContent = themeAchievements.minorBadges || 0;
-                document.getElementById('grand-badge-level').textContent = themeAchievements.grandBadges || 0;
+                const theme = state.currentTheme;
+                const themeAchievements = state.achievements[theme];
+                const minorBadges = themeAchievements.minorBadges || 0;
+                const grandBadges = themeAchievements.grandBadges || 0;
+
+                const minorBadgeDiv = document.getElementById('achievement-badge');
+                const grandBadgeDiv = document.getElementById('grand-badge');
+                
+                minorBadgeDiv.innerHTML = badgeInfo[theme].minor.icon(minorBadges);
+                grandBadgeDiv.innerHTML = badgeInfo[theme].grand.icon(grandBadges);
+                
+                document.getElementById('minor-badge-name').textContent = badgeInfo[theme].minor.name;
+                document.getElementById('grand-badge-name').textContent = badgeInfo[theme].grand.name;
                 document.getElementById('main-quote').textContent = `"${themeAchievements.mainQuote}"`;
                 
-                const badge = document.getElementById('achievement-badge');
-                const grandBadge = document.getElementById('grand-badge');
                 const themeColors = { classic: ['bg-blue-500', 'text-white'], 'wonder-woman': ['bg-yellow-500', 'text-blue-900'], 'iron-man': ['bg-cyan-400', 'text-gray-900'], batman: ['bg-yellow-400', 'text-black'] };
-                badge.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
-                grandBadge.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
-                badge.classList.add(...themeColors[state.currentTheme]);
-                grandBadge.classList.add(...themeColors[state.currentTheme]);
+                minorBadgeDiv.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
+                grandBadgeDiv.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
+                minorBadgeDiv.classList.add(...themeColors[theme]);
+                grandBadgeDiv.classList.add(...themeColors[theme]);
             }
             
             function showLevelUpModal(message, title = "LEVEL UP!") {
@@ -903,7 +926,7 @@
             document.getElementById('close-quote-modal').addEventListener('click', () => closeModal('quote-modal'));
             document.getElementById('close-level-up-modal').addEventListener('click', () => closeModal('level-up-modal'));
             document.getElementById('calendar-grid').addEventListener('click', e => {
-                if (e.target.dataset.date) openCalendarNoteModal(e.target.date);
+                if (e.target.dataset.date) openCalendarNoteModal(e.target.dataset.date);
             });
         });
     </script>
