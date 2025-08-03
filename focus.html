@@ -6,7 +6,6 @@
     <title>Focus Mode</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* CSS Variables for theming */
@@ -44,16 +43,6 @@
             --batman-heatmap-high: #26a641;
             --batman-heatmap-very-high: #39d353;
         }
-        
-        /* NEW: Canvas background */
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Place it behind everything */
-        }
 
         body {
             font-family: var(--font-family-sans);
@@ -62,11 +51,10 @@
             padding: 20px;
             padding-bottom: 80px;
             box-sizing: border-box;
-            background-color: var(--classic-bg); /* Fallback bg */
         }
         
-        .classic-theme { color: var(--classic-text); }
-        .batman-theme { color: var(--batman-text); }
+        .classic-theme { background-color: var(--classic-bg); color: var(--classic-text); }
+        .batman-theme { background-color: var(--batman-bg); color: var(--batman-text); }
         
         .header-controls { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 20px; z-index: 10; }
         .app-container { max-width: 1200px; margin: auto; margin-top: 50px; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
@@ -195,9 +183,6 @@
 </head>
 <body class="hidden"> 
 
-    <!-- NEW: 3D Scene Canvas -->
-    <canvas id="bg-canvas"></canvas>
-
     <div class="header-controls">
         <label class="theme-switch">
             <input type="checkbox" id="theme-toggle">
@@ -308,61 +293,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        // --- 3D Scene Setup ---
-        function initThreeScene() {
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-
-            // Trees
-            const treeMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513, transparent: true, opacity: 0.5 });
-            for (let i = 0; i < 50; i++) {
-                const height = Math.random() * 10 + 5;
-                const geometry = new THREE.CylinderGeometry(0.1, 0.2, height, 8);
-                const tree = new THREE.Mesh(geometry, treeMaterial);
-                tree.position.x = (Math.random() - 0.5) * 40;
-                tree.position.z = (Math.random() - 0.5) * 40 - 20;
-                tree.position.y = height / 2 - 5;
-                scene.add(tree);
-            }
-
-            // Falling Leaves
-            const leavesGeometry = new THREE.BufferGeometry();
-            const leavesCount = 1500;
-            const posArray = new Float32Array(leavesCount * 3);
-            for (let i = 0; i < leavesCount * 3; i++) {
-                posArray[i] = (Math.random() - 0.5) * 50;
-            }
-            leavesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const leavesMaterial = new THREE.PointsMaterial({ size: 0.05, color: 0x6B8E23 });
-            const leavesMesh = new THREE.Points(leavesGeometry, leavesMaterial);
-            scene.add(leavesMesh);
-
-            camera.position.z = 5;
-
-            const clock = new THREE.Clock();
-
-            function animate() {
-                const elapsedTime = clock.getElapsedTime();
-                // Animate leaves falling
-                leavesMesh.position.y = (elapsedTime * -0.2) % 10;
-                // Gentle camera sway for "breeze"
-                camera.position.x = Math.sin(elapsedTime * 0.1) * 0.5;
-                camera.position.y = Math.cos(elapsedTime * 0.1) * 0.2;
-                camera.lookAt(scene.position);
-                renderer.render(scene, camera);
-                window.requestAnimationFrame(animate);
-            }
-            animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        }
 
         // --- Main App Logic ---
         function initializeFocusApp(db, auth, user, initialData) {
@@ -789,60 +719,118 @@
                 }
             });
 
-            // --- MODIFIED: Sound Library with new icons and Train sound ---
+            // --- NEW: High-Quality Sound Library ---
             const soundLibrary = {
                 rain: {
                     name: "Rain",
                     icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 18v-2.22a5.5 5.5 0 0 1 2.2-4.34l.32-.26a3.5 3.5 0 0 0-4.95-4.95L4.3 6.5A7.5 7.5 0 0 1 12 4.05V2a1 1 0 0 1 2 0v2.05a7.5 7.5 0 0 1 7.7 7.45H20a1 1 0 0 1 0 2h-1.05A5.5 5.5 0 0 1 14.6 18H13v4a1 1 0 0 1-2 0v-4z"/></svg>`,
                     factory: () => {
-                        const finalNode = new Tone.Filter(1200, "lowpass");
-                        const player = new Tone.Noise("pink").connect(finalNode);
-                        return { player, finalNode, nodesToDispose: [player, finalNode], toStart: [player] };
+                        const panner = new Tone.Panner(0.5).toDestination();
+                        const filter = new Tone.Filter(1200, "lowpass").connect(panner);
+                        const player = new Tone.Noise("pink").connect(filter);
+                        return { player, nodesToDispose: [player, filter, panner], toStart: [player] };
+                    }
+                },
+                thunder: {
+                    name: "Thunder",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 2v9h3l-4 8v-7H9l4-10z"/></svg>`,
+                    factory: () => {
+                        const finalNode = new Tone.Gain().toDestination();
+                        const noise = new Tone.Noise("pink");
+                        const filter = new Tone.Filter(100, "lowpass").connect(finalNode);
+                        const env = new Tone.AmplitudeEnvelope({
+                            attack: 0.01, decay: 0.4, sustain: 0, release: 0.1
+                        }).connect(filter);
+                        noise.connect(env);
+                        const player = new Tone.Loop(time => {
+                            if (Math.random() > 0.8) { // Only trigger occasionally
+                                env.triggerAttackRelease("0.5s", time);
+                            }
+                        }, "1s");
+                        return { player, nodesToDispose: [noise, filter, env, player, finalNode], toStart: [noise] };
                     }
                 },
                 wind: {
                     name: "Wind",
                     icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h11a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm0 5h8a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm0 5h11a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm14-5a2 2 0 1 1-2-2 2 2 0 0 1 2 2z"/></svg>`,
                     factory: () => {
-                        const finalNode = new Tone.Filter(400, "lowpass");
+                        const finalNode = new Tone.Filter(400, "lowpass").toDestination();
                         const lfo = new Tone.LFO("0.2", 200, 600).connect(finalNode.frequency);
                         const player = new Tone.Noise("brown").connect(finalNode);
-                        return { player, finalNode, nodesToDispose: [player, finalNode, lfo], toStart: [player, lfo] };
+                        return { player, nodesToDispose: [player, finalNode, lfo], toStart: [player, lfo] };
+                    }
+                },
+                 fire: {
+                    name: "Fire",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 4.25-2.69 7.82-6 8.86A1 1 0 0 0 0 19h24a1 1 0 0 0 1-1.14C21.69 16.82 19 13.25 19 9c0-3.87-3.13-7-7-7zm0 15a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3z"/></svg>`,
+                    factory: () => {
+                        const finalNode = new Tone.Gain().toDestination();
+                        const lpFilter = new Tone.Filter(700, "lowpass").connect(finalNode);
+                        const player = new Tone.Noise("white").connect(lpFilter);
+                        return { player, nodesToDispose: [player, lpFilter, finalNode], toStart: [player] };
                     }
                 },
                 forest: {
                     name: "Forest",
                     icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 12a1 1 0 0 1-1-1V8a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1zm-4 2a1 1 0 0 1-1-1v-3a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1zm-4 3a1 1 0 0 1-1-1v-5a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zm11-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zM2 22h20a1 1 0 0 1 0 2H2a1 1 0 0 1 0-2z"/></svg>`,
                     factory: () => {
-                        const finalNode = new Tone.Gain();
+                        const finalNode = new Tone.Gain().toDestination();
                         const wind = new Tone.Noise("pink").connect(new Tone.Filter(300, "lowpass").connect(finalNode));
                         const chirpSynth = new Tone.Synth({
                             oscillator: { type: "sine" },
                             envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
                         }).connect(finalNode);
-                        const chirpLoop = new Tone.Loop(time => {
+                        const player = new Tone.Loop(time => {
                             if (Math.random() > 0.6) {
                                 const pitch = Math.random() * 500 + 800;
                                 chirpSynth.triggerAttackRelease(pitch, "16n", time);
                             }
                         }, "1s");
-                        return { player: chirpLoop, finalNode, nodesToDispose: [wind, chirpSynth, chirpLoop, finalNode], toStart: [wind] };
+                        return { player, nodesToDispose: [wind, chirpSynth, player, finalNode], toStart: [wind] };
                     }
                 },
                 train: {
                     name: "Train",
                     icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 4H6a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4V8a4 4 0 0 0-4-4zM6 6h12a2 2 0 0 1 2 2v1H4V8a2 2 0 0 1 2-2zm12 12H6a2 2 0 0 1-2-2v-5h16v5a2 2 0 0 1-2 2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>`,
                     factory: () => {
-                        const finalNode = new Tone.Gain();
+                        const finalNode = new Tone.Gain().toDestination();
                         const rumble = new Tone.Noise("brown").connect(new Tone.Filter(200, "lowpass").connect(finalNode));
                         const clackSynth = new Tone.NoiseSynth({
                             noise: { type: 'white' },
                             envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 }
                         }).connect(finalNode);
-                        const clackLoop = new Tone.Loop(time => {
+                        const player = new Tone.Loop(time => {
                             clackSynth.triggerAttackRelease("32n", time);
                         }, "4n");
-                        return { player: clackLoop, finalNode, nodesToDispose: [rumble, clackSynth, clackLoop, finalNode], toStart: [rumble] };
+                        return { player, nodesToDispose: [rumble, clackSynth, player, finalNode], toStart: [rumble] };
+                    }
+                },
+                coffeeShop: {
+                    name: "Coffee Shop",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18.5 3H6a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3zm-1 9H7V7h10.5zM20 6a1 1 0 0 0-1 1v8a1 1 0 0 0 2 0V7a1 1 0 0 0-1-1z"/></svg>`,
+                    factory: () => {
+                        const finalNode = new Tone.Gain().toDestination();
+                        const murmur = new Tone.Noise("pink").connect(new Tone.Filter(500, "bandpass").connect(finalNode));
+                        return { player: murmur, nodesToDispose: [murmur, finalNode], toStart: [murmur] };
+                    }
+                },
+                singingBowl: {
+                    name: "Singing Bowl",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2 9a10 10 0 0 1 20 0v1H2zm1 3h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`,
+                    factory: () => {
+                        const finalNode = new Tone.Gain().toDestination();
+                        const synth = new Tone.FMSynth({
+                            harmonicity: 1,
+                            modulationIndex: 10,
+                            envelope: { attack: 0.01, decay: 2, sustain: 0.1, release: 4 },
+                            modulationEnvelope: { attack: 0.5, decay: 0, sustain: 1, release: 0.5 }
+                        }).connect(finalNode);
+                        const player = new Tone.Loop(time => {
+                            if (Math.random() > 0.8) {
+                                synth.triggerAttackRelease("C3", "4s", time);
+                            }
+                        }, "5s");
+                        return { player, nodesToDispose: [synth, player, finalNode], toStart: [] };
                     }
                 }
             };
@@ -882,7 +870,7 @@
                 } else {
                     state.sound = soundLibrary[key].factory();
                     state.volume = new Tone.Volume(0).toDestination();
-                    state.sound.finalNode.connect(state.volume);
+                    state.sound.player.connect(state.volume); // Connect player to volume
                     const volumeValue = parseFloat(slider.value);
                     const dB = volumeValue === 0 ? -Infinity : (volumeValue * 40) - 40;
                     state.volume.volume.value = dB;
@@ -970,7 +958,7 @@
                 document.getElementById('app-container').classList.remove('hidden');
                 document.body.classList.remove('hidden');
 
-                initThreeScene(); // Start the 3D scene
+                // initThreeScene(); // REMOVED: No more 3D scene
                 initializeFocusApp(db, auth, currentUser, initialData);
 
             } catch (error) {
