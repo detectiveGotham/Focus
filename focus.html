@@ -88,6 +88,7 @@
             transition: background-color 0.3s, box-shadow 0.3s;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
         .full-width {
@@ -97,13 +98,11 @@
         .classic-theme .card {
             background-color: var(--classic-surface-bg);
             border: 1px solid var(--classic-border);
-            box-shadow: var(--classic-shadow);
         }
 
         .batman-theme .card {
             background-color: var(--batman-surface-bg);
             border: 1px solid var(--batman-border);
-            box-shadow: var(--batman-shadow);
         }
 
         h2 {
@@ -132,404 +131,115 @@
             outline: 2px solid var(--batman-primary);
         }
 
-
         /* Theme Switcher */
-        .theme-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-
+        .theme-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
         .theme-switch input { opacity: 0; width: 0; height: 0; }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         .classic-theme .slider { background-color: #ccc; }
         .batman-theme .slider { background-color: var(--batman-primary); }
-
         input:checked + .slider:before { transform: translateX(26px); }
 
         /* Timer Section */
         #timer-display {
             font-family: var(--font-family-mono);
-            font-size: 4rem;
+            font-size: clamp(3rem, 10vw, 4rem);
             text-align: center;
             margin: 20px 0;
             font-weight: 700;
         }
         
-        #progress-bar-container {
-            width: 100%;
-            height: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
+        #progress-bar-container { width: 100%; height: 10px; border-radius: 5px; margin-bottom: 20px; }
         .classic-theme #progress-bar-container { background-color: var(--classic-border); }
         .batman-theme #progress-bar-container { background-color: var(--batman-border); }
-
-        #progress-bar {
-            height: 100%;
-            width: 0%;
-            border-radius: 5px;
-            transition: width 0.5s ease-out;
-        }
+        #progress-bar { height: 100%; width: 0%; border-radius: 5px; transition: width 0.5s ease-out; }
         .classic-theme #progress-bar { background-color: var(--classic-primary); }
         .batman-theme #progress-bar { background-color: var(--batman-primary); }
 
-
-        .timer-inputs, .timer-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .timer-inputs input {
-            width: 80px;
-            padding: 10px;
-            font-size: 1rem;
-            text-align: center;
-            border-radius: 8px;
-            border: 1px solid;
-        }
-
-        .classic-theme .timer-inputs input {
-            background-color: var(--classic-bg);
-            border-color: var(--classic-border);
-            color: var(--classic-text);
-        }
-
-        .batman-theme .timer-inputs input {
-            background-color: var(--batman-bg);
-            border-color: var(--batman-border);
-            color: var(--batman-text);
-        }
+        .timer-inputs, .timer-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .timer-inputs input { width: 80px; padding: 10px; font-size: 1rem; text-align: center; border-radius: 8px; border: 1px solid; }
+        .classic-theme .timer-inputs input { background-color: var(--classic-bg); border-color: var(--classic-border); color: var(--classic-text); }
+        .batman-theme .timer-inputs input { background-color: var(--batman-bg); border-color: var(--batman-border); color: var(--batman-text); }
         
-        button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
+        /* Better Button Styles */
+        button, .btn-secondary {
+            padding: 10px 20px; font-size: 1rem; font-weight: bold; border-radius: 8px; border: none; cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        
-        button:active { transform: scale(0.98); }
+        button:hover, .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        button:active, .btn-secondary:active { transform: translateY(0px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
         .btn-primary { color: var(--classic-primary-text); }
         .classic-theme .btn-primary { background-color: var(--classic-primary); }
-        .batman-theme .btn-primary { 
-            background-color: var(--batman-primary);
-            color: var(--batman-primary-text);
-        }
-
+        .batman-theme .btn-primary { background-color: var(--batman-primary); color: var(--batman-primary-text); }
         .btn-secondary { background-color: transparent; }
-
-        .classic-theme .btn-secondary {
-            border: 1px solid var(--classic-border);
-            color: var(--classic-text);
-        }
-        .batman-theme .btn-secondary {
-            border: 1px solid var(--batman-border);
-            color: var(--batman-text);
-        }
+        .classic-theme .btn-secondary { border: 1px solid var(--classic-border); color: var(--classic-text); }
+        .batman-theme .btn-secondary { border: 1px solid var(--batman-border); color: var(--batman-text); }
 
         /* Checklist */
-        .task-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            max-height: 250px;
-            padding-right: 10px;
-        }
-
-        .task-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
+        .task-list { flex-grow: 1; overflow-y: auto; max-height: 250px; padding-right: 10px; }
+        .task-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .task-item input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
-
-        .task-item input[type="text"] {
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid;
-            flex-grow: 1;
-        }
-        
+        .task-item input[type="text"] { padding: 8px; border-radius: 6px; border: 1px solid; flex-grow: 1; }
         .task-item .task-timer { font-family: var(--font-family-mono); font-size: 0.9rem; min-width: 60px; text-align: right;}
         .task-item button { padding: 5px 10px; font-size: 0.8rem; }
-
-        .classic-theme .task-item input[type="text"] {
-            background-color: var(--classic-bg);
-            border-color: var(--classic-border);
-            color: var(--classic-text);
-        }
-        .batman-theme .task-item input[type="text"] {
-            background-color: var(--batman-bg);
-            border-color: var(--batman-border);
-            color: var(--batman-text);
-        }
+        .classic-theme .task-item input[type="text"] { background-color: var(--classic-bg); border-color: var(--classic-border); color: var(--classic-text); }
+        .batman-theme .task-item input[type="text"] { background-color: var(--batman-bg); border-color: var(--batman-border); color: var(--batman-text); }
         
         /* Heatmap & Stats Section */
-        .heatmap-wrapper {
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-        }
-        .heatmap-body {
-            display: flex;
-        }
-        .heatmap-scroll-area {
-            overflow-x: auto;
-            flex-grow: 1;
-        }
-        .heatmap-months {
-            display: flex;
-            margin-bottom: 5px;
-            padding-left: 1px; /* Small padding to align with grid */
-        }
-        .heatmap-month {
-            min-width: calc((15px + 4px) * 4.3); /* (day width + gap) * ~weeks in month */
-            font-size: 0.8rem;
-            text-align: left;
-        }
-        .heatmap-days-of-week {
-            display: grid;
-            grid-template-rows: repeat(7, 1fr);
-            gap: 4px;
-            padding: 24px 5px 0 5px; /* Add padding to align with grid */
-            flex-shrink: 0;
-        }
-        .heatmap-day-label {
-            font-size: 0.7rem;
-            width: 20px;
-            text-align: center;
-            height: 15px; /* Match heatmap day height */
-            line-height: 15px; /* Center text vertically */
-        }
-        .heatmap-container {
-            display: grid;
-            grid-template-rows: repeat(7, 1fr);
-            grid-auto-flow: column;
-            gap: 4px;
-        }
-
-        .heatmap-day {
-            width: 15px;
-            height: 15px;
-            border-radius: 3px;
-            position: relative;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-        .heatmap-day.today {
-            border-color: var(--classic-primary);
-        }
-        .batman-theme .heatmap-day.today {
-            border-color: var(--batman-primary);
-        }
-        
+        .heatmap-wrapper { display: flex; flex-direction: column; padding: 10px; }
+        .heatmap-body { display: flex; }
+        .heatmap-scroll-area { overflow-x: auto; flex-grow: 1; }
+        .heatmap-months { display: flex; margin-bottom: 5px; padding-left: 1px; }
+        .heatmap-month { min-width: calc((15px + 4px) * 4.3); font-size: 0.8rem; text-align: left; }
+        .heatmap-days-of-week { display: grid; grid-template-rows: repeat(7, 1fr); gap: 4px; padding: 24px 5px 0 5px; flex-shrink: 0; }
+        .heatmap-day-label { font-size: 0.7rem; width: 20px; text-align: center; height: 15px; line-height: 15px; }
+        .heatmap-container { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 4px; }
+        .heatmap-day { width: 15px; height: 15px; border-radius: 3px; position: relative; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
+        .heatmap-day:hover { transform: scale(1.2); }
+        .heatmap-day.today { border-color: var(--classic-primary); }
+        .batman-theme .heatmap-day.today { border-color: var(--batman-primary); }
         .classic-theme .heatmap-day { background-color: var(--classic-heatmap-empty); }
         .batman-theme .heatmap-day { background-color: var(--batman-heatmap-empty); }
-
         .heatmap-day[data-level="1"] { background-color: var(--classic-heatmap-low); }
         .heatmap-day[data-level="2"] { background-color: var(--classic-heatmap-medium); }
         .heatmap-day[data-level="3"] { background-color: var(--classic-heatmap-high); }
         .heatmap-day[data-level="4"] { background-color: var(--classic-heatmap-very-high); }
-        
         .batman-theme .heatmap-day[data-level="1"] { background-color: var(--batman-heatmap-low); }
         .batman-theme .heatmap-day[data-level="2"] { background-color: var(--batman-heatmap-medium); }
         .batman-theme .heatmap-day[data-level="3"] { background-color: var(--batman-heatmap-high); }
         .batman-theme .heatmap-day[data-level="4"] { background-color: var(--batman-heatmap-very-high); }
-
-        .heatmap-day .tooltip {
-            visibility: hidden;
-            width: 160px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px 0;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -80px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .heatmap-day:hover .tooltip { visibility: visible; opacity: 1; }
         
-        .stats-container {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid;
-            font-size: 0.9rem;
-        }
+        .stats-container { margin-top: 15px; padding-top: 15px; border-top: 1px solid; font-size: 0.9rem; }
         .classic-theme .stats-container { border-color: var(--classic-border); }
         .batman-theme .stats-container { border-color: var(--batman-border); }
-
-        .stats-container p {
-            margin: 5px 0;
-            display: flex;
-            justify-content: space-between;
-        }
+        .stats-container p { margin: 5px 0; display: flex; justify-content: space-between; }
         .stats-container span { font-weight: bold; }
 
         /* Sound Mixer */
-        #sound-mixer-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        #sound-mixer-modal.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        .sound-mixer-panel {
-            padding: 30px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .classic-theme .sound-mixer-panel {
-            background-color: var(--classic-surface-bg);
-        }
-        .batman-theme .sound-mixer-panel {
-            background-color: var(--batman-surface-bg);
-        }
-        .sound-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 20px;
-        }
-        .sound-control {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        .sound-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid;
-        }
-        .classic-theme .sound-icon {
-            border-color: var(--classic-border);
-            color: var(--classic-text);
-        }
-        .batman-theme .sound-icon {
-            border-color: var(--batman-border);
-            color: var(--batman-text);
-        }
-        .sound-icon.active {
-            transform: scale(1.1);
-        }
-        .classic-theme .sound-icon.active {
-            background-color: var(--classic-primary);
-            color: var(--classic-primary-text);
-            border-color: var(--classic-primary);
-        }
-        .batman-theme .sound-icon.active {
-            background-color: var(--batman-primary);
-            color: var(--batman-primary-text);
-            border-color: var(--batman-primary);
-        }
-        .sound-icon svg {
-            width: 30px;
-            height: 30px;
-            fill: currentColor;
-        }
-        .sound-control .volume-slider {
-            width: 100%;
-            height: 5px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s;
-        }
-        .sound-control .volume-slider.visible {
-            opacity: 1;
-            visibility: visible;
-        }
+        #sound-mixer-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 200; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+        #sound-mixer-modal.visible { opacity: 1; visibility: visible; }
+        .sound-mixer-panel { padding: 30px; border-radius: 16px; width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 20px; }
+        .classic-theme .sound-mixer-panel { background-color: var(--classic-surface-bg); }
+        .batman-theme .sound-mixer-panel { background-color: var(--batman-surface-bg); }
+        .sound-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 20px; }
+        .sound-control { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .sound-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; border: 2px solid; }
+        .classic-theme .sound-icon { border-color: var(--classic-border); color: var(--classic-text); }
+        .batman-theme .sound-icon { border-color: var(--batman-border); color: var(--batman-text); }
+        .sound-icon.active { transform: scale(1.1); }
+        .classic-theme .sound-icon.active { background-color: var(--classic-primary); color: var(--classic-primary-text); border-color: var(--classic-primary); }
+        .batman-theme .sound-icon.active { background-color: var(--batman-primary); color: var(--batman-primary-text); border-color: var(--batman-primary); }
+        .sound-icon svg { width: 30px; height: 30px; stroke-width: 1.5; fill: none; stroke: currentColor; } /* MODIFIED: For line icons */
+        .sound-control .volume-slider { width: 100%; height: 5px; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; }
+        .sound-control .volume-slider.visible { opacity: 1; visibility: visible; }
 
         /* Bottom Controls */
-        .bottom-controls {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            z-index: 100;
-            border-top: 1px solid;
-        }
-        .classic-theme .bottom-controls {
-            background-color: var(--classic-bg);
-            border-color: var(--classic-border);
-        }
-        .batman-theme .bottom-controls {
-            background-color: var(--batman-bg);
-            border-color: var(--batman-border);
-        }
-
-        .bottom-controls > * {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 6px;
-        }
+        .bottom-controls { position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 15px; z-index: 100; border-top: 1px solid; }
+        .classic-theme .bottom-controls { background-color: var(--classic-bg); border-color: var(--classic-border); }
+        .batman-theme .bottom-controls { background-color: var(--batman-bg); border-color: var(--batman-border); }
+        .bottom-controls > * { padding: 6px 12px; font-size: 0.8rem; font-weight: bold; text-decoration: none; border-radius: 6px; }
 
     </style>
 </head>
@@ -542,7 +252,6 @@
         </label>
     </div>
 
-    <!-- MODIFIED: Loading container now includes an error state -->
     <div id="loading-container" class="w-screen h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div id="loading-spinner" class="text-center">
             <p class="text-2xl text-gray-500 animate-pulse">Loading Focus Mode...</p>
@@ -570,9 +279,6 @@
                 <button id="pause-btn" class="btn-secondary" style="display:none;">Pause</button>
                 <button id="reset-btn" class="btn-secondary" style="display:none;">Reset</button>
                 <button id="done-btn" class="btn-primary" style="display:none;">Done</button>
-            </div>
-             <div class="timer-controls" style="margin-top: auto; margin-bottom: 0;">
-                <button id="save-data-btn" class="btn-secondary">Save Data</button>
             </div>
         </div>
 
@@ -617,6 +323,16 @@
         </div>
     </div>
 
+    <!-- Calendar Detail Modal -->
+    <div id="calendar-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl text-center w-full max-w-xs classic-theme">
+            <h3 id="modal-date" class="text-lg font-bold mb-2"></h3>
+            <p class="text-4xl font-mono mb-4" id="modal-task-count"></p>
+            <p class="text-sm text-gray-500" id="modal-task-label"></p>
+            <button id="close-calendar-modal" class="mt-6 w-full btn-primary">Close</button>
+        </div>
+    </div>
+
     <!-- Firebase SDK script -->
     <script type="module">
         // Import Firebase modules
@@ -653,7 +369,6 @@
             const pauseBtn = document.getElementById('pause-btn');
             const resetBtn = document.getElementById('reset-btn');
             const doneBtn = document.getElementById('done-btn');
-            const saveDataBtn = document.getElementById('save-data-btn');
             const checklistTitle = document.getElementById('checklist-title');
             const generalTasksList = document.getElementById('general-tasks-list');
             const addGeneralTaskBtn = document.getElementById('add-general-task-btn');
@@ -668,9 +383,15 @@
             const soundMixerModal = document.getElementById('sound-mixer-modal');
             const closeMixerBtn = document.getElementById('close-mixer-btn');
             const soundGrid = document.getElementById('sound-grid');
+            const calendarDetailModal = document.getElementById('calendar-detail-modal');
+            const modalDate = document.getElementById('modal-date');
+            const modalTaskCount = document.getElementById('modal-task-count');
+            const modalTaskLabel = document.getElementById('modal-task-label');
+            const closeCalendarModalBtn = document.getElementById('close-calendar-modal');
 
             // State Management
             let mainTimer, generalTasks, focusHistory, checklistHistory, theme, checklistTitleText;
+            let audioInitialized = false; // Flag to check if Tone.js is started
             
             const defaultFocusState = {
                 theme: 'classic',
@@ -692,17 +413,12 @@
                 checklistHistory = mergedState.checklistHistory;
             }
 
-            const saveState = async (showNotification = false) => {
+            const saveState = async () => {
                 if (!user) return;
                 const focusState = { theme, checklistTitleText, mainTimer, generalTasks, focusHistory, checklistHistory };
                 try {
                     const userDocRef = doc(db, "user_data", user.uid);
                     await setDoc(userDocRef, { focusState: focusState }, { merge: true });
-                    if (showNotification) {
-                        const originalText = saveDataBtn.textContent;
-                        saveDataBtn.textContent = 'Saved!';
-                        setTimeout(() => { saveDataBtn.textContent = originalText; }, 1500);
-                    }
                 } catch (e) {
                     console.error("Error saving focus state to Firestore:", e);
                 }
@@ -732,6 +448,7 @@
                 body.classList.toggle('batman-theme', isBatman);
                 body.classList.toggle('classic-theme', !isBatman);
                 themeToggle.checked = isBatman;
+                calendarDetailModal.querySelector('div').className = isBatman ? 'bg-gray-800 p-6 rounded-lg shadow-xl text-center w-full max-w-xs batman-theme' : 'bg-white p-6 rounded-lg shadow-xl text-center w-full max-w-xs classic-theme';
             }
             
             themeToggle.addEventListener('change', () => {
@@ -994,7 +711,6 @@
                 const container = checklistHeatmapContainer;
                 const monthsContainer = heatmapMonthsContainer;
                 const data = checklistHistory;
-                const unit = 'tasks';
                 const dateEl = checklistHeatmapDate;
                 container.innerHTML = '';
                 monthsContainer.innerHTML = '';
@@ -1024,6 +740,7 @@
                     const dateString = date.toISOString().split('T')[0];
                     const dayEl = document.createElement('div');
                     dayEl.classList.add('heatmap-day');
+                    dayEl.dataset.date = dateString;
                     if (dateString === todayString) {
                         dayEl.classList.add('today');
                     }
@@ -1037,17 +754,83 @@
                         else level = 4;
                     }
                     if (level > 0) dayEl.dataset.level = level;
-                    dayEl.innerHTML = `<span class="tooltip">${value} ${unit} on ${date.toDateString()}</span>`;
                     container.appendChild(dayEl);
                     date.setDate(date.getDate() + 1);
                 }
             };
             
+            checklistHeatmapContainer.addEventListener('click', (e) => {
+                const dayEl = e.target.closest('.heatmap-day');
+                if (dayEl && dayEl.dataset.date) {
+                    const dateStr = dayEl.dataset.date;
+                    const value = checklistHistory[dateStr] || 0;
+                    const date = new Date(dateStr + 'T00:00:00');
+                    modalDate.textContent = date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    modalTaskCount.textContent = value;
+                    modalTaskLabel.textContent = value === 1 ? 'Task Completed' : 'Tasks Completed';
+                    calendarDetailModal.classList.remove('hidden');
+                }
+            });
+            
+            closeCalendarModalBtn.addEventListener('click', () => {
+                calendarDetailModal.classList.add('hidden');
+            });
+            calendarDetailModal.addEventListener('click', (e) => {
+                if (e.target === calendarDetailModal) {
+                    calendarDetailModal.classList.add('hidden');
+                }
+            });
+
+            // --- MODIFIED: Sound Library with new icons and Train sound ---
             const soundLibrary = {
-                rain: { name: "Rain", icon: `<svg viewBox="0 0 24 24"><path d="M12,2A9,9,0,0,0,3,11c0,4.28,3,7.84,7,8.79V12a2,2,0,0,1,2-2h0a2,2,0,0,1,2,2v7.79c4-0.95,7-4.51,7-8.79A9,9,0,0,0,12,2ZM8,16a1,1,0,0,1-2,0V13a1,1,0,0,1,2,0Zm4,2a1,1,0,0,1-2,0V14a1,1,0,0,1,2,0Zm4-3a1,1,0,0,1-2,0V12a1,1,0,0,1,2,0Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(1000, "lowpass"); const player = new Tone.Noise("pink").connect(finalNode); return { player, finalNode, otherNodes: [] }; } },
-                wind: { name: "Wind", icon: `<svg viewBox="0 0 24 24"><path d="M19.5,6A2.5,2.5,0,0,0,17,8.5a2.42,2.42,0,0,0,0,.31,3.5,3.5,0,0,0-3.5-3.5,3.44,3.44,0,0,0-1.46.33A4.5,4.5,0,0,0,7.5,10H3a1,1,0,0,0,0,2H7.5a4.41,4.41,0,0,0,0.29.0A4.5,4.5,0,0,0,12,14.5a4.44,4.44,0,0,0,1.46-.33,3.5,3.5,0,0,0,3.5,3.5,3.42,3.42,0,0,0,.5,0,2.5,2.5,0,0,0,2.5,2.5,2.5,2.5,0,0,0,0-5,2.42,2.42,0,0,0,0-.31,3.5,3.5,0,0,0,3.5-3.5,3.44,3.44,0,0,0-1.46-.33A4.5,4.5,0,0,0,19.5,6Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(400, "lowpass"); const lfo = new Tone.LFO("0.2", 200, 600).connect(finalNode.frequency).start(); const player = new Tone.Noise("brown").connect(finalNode); return { player, finalNode, otherNodes: [lfo] }; } },
-                fire: { name: "Fire", icon: `<svg viewBox="0 0 24 24"><path d="M13.2,4.32a9.1,9.1,0,0,0-5.83,4.43,4.38,4.38,0,0,1,.43,2.68,4.49,4.49,0,0,1-3.1,4.11,7.5,7.5,0,0,0,1.4,2.36c.64.71,1.24,1,2.2,1.19A8.43,8.43,0,0,0,12,22a8.43,8.43,0,0,0,3.7-.81c.92-.19,1.52-.48,2.16-1.19a7.5,7.5,0,0,0,1.4-2.36,4.49,4.49,0,0,1-3.1-4.11,4.38,4.38,0,0,1,.43-2.68A9.1,9.1,0,0,0,13.2,4.32Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(2000, "highpass"); const lpFilter = new Tone.Filter(700, "lowpass").connect(finalNode); const player = new Tone.Noise("white").connect(lpFilter); return { player, finalNode, otherNodes: [lpFilter] }; } },
-                coffee: { name: "Cafe", icon: `<svg viewBox="0 0 24 24"><path d="M18,6H6A3,3,0,0,0,3,9v6a3,3,0,0,0,3,3h8a3,3,0,0,0,3-3V9A3,3,0,0,0,18,6ZM8,14H6V12H8Zm0-3H6V9H8Zm4,3H10V12h2Zm0-3H10V9h2Zm4,3H14V12h2Zm0-3H14V9h2Zm2-5a1,1,0,0,1,1,1V15a1,1,0,0,1-2,0V7A1,1,0,0,1,20,6Z"/></svg>`, factory: () => { const finalNode = new Tone.Filter(800, "bandpass"); const player = new Tone.Noise("pink").connect(finalNode); return { player, finalNode, otherNodes: [] }; } }
+                rain: {
+                    name: "Rain",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 22a1 1 0 0 1-1-1v-5a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zm-4-2a1 1 0 0 1-1-1v-3a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1zm8 0a1 1 0 0 1-1-1v-3a1 1 0 0 1 2 0v3a1 1 0 0 1-1 1zm-4-5a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zm-4-2a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zm8 0a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zM12 11a1 1 0 0 1-1-1V5a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1zM7.05 4.95A9 9 0 0 1 19.24 12h-2.1A7 7 0 0 0 7.05 4.95z"/></svg>`,
+                    factory: () => {
+                        const finalNode = new Tone.Filter(1200, "lowpass");
+                        const player = new Tone.Noise("pink").connect(finalNode);
+                        return { player, finalNode, nodesToDispose: [player, finalNode] };
+                    }
+                },
+                wind: {
+                    name: "Wind",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h11a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm0 5h8a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm0 5h11a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm14-5a2 2 0 1 1-2-2 2 2 0 0 1 2 2z"/></svg>`,
+                    factory: () => {
+                        const finalNode = new Tone.Filter(400, "lowpass");
+                        const lfo = new Tone.LFO("0.2", 200, 600).connect(finalNode.frequency);
+                        const player = new Tone.Noise("brown").connect(finalNode);
+                        return { player, finalNode, nodesToDispose: [player, finalNode, lfo], toStart: [lfo] };
+                    }
+                },
+                fire: {
+                    name: "Fire",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 4.25-2.69 7.82-6 8.86A1 1 0 0 0 0 19h24a1 1 0 0 0 1-1.14C21.69 16.82 19 13.25 19 9c0-3.87-3.13-7-7-7zm0 15a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3z"/></svg>`,
+                    factory: () => {
+                        const finalNode = new Tone.Filter(2000, "highpass");
+                        const lpFilter = new Tone.Filter(700, "lowpass").connect(finalNode);
+                        const player = new Tone.Noise("white").connect(lpFilter);
+                        return { player, finalNode, nodesToDispose: [player, finalNode, lpFilter] };
+                    }
+                },
+                train: {
+                    name: "Train",
+                    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 4H6a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4V8a4 4 0 0 0-4-4zM6 6h12a2 2 0 0 1 2 2v1H4V8a2 2 0 0 1 2-2zm12 12H6a2 2 0 0 1-2-2v-5h16v5a2 2 0 0 1-2 2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>`,
+                    factory: () => {
+                        const finalNode = new Tone.Gain();
+                        // Rumble
+                        const rumble = new Tone.Noise("brown").connect(new Tone.Filter(200, "lowpass").connect(finalNode));
+                        // Clack sound
+                        const clackSynth = new Tone.NoiseSynth({
+                            noise: { type: 'white' },
+                            envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 }
+                        }).connect(finalNode);
+                        // Rhythmic loop for the clack
+                        const clackLoop = new Tone.Loop(time => {
+                            clackSynth.triggerAttackRelease("32n", time);
+                        }, "4n");
+                        return { player: clackLoop, finalNode, nodesToDispose: [rumble, clackSynth, clackLoop, finalNode], toStart: [rumble] };
+                    }
+                }
             };
             let mixerState = {};
 
@@ -1055,7 +838,7 @@
                 soundGrid.innerHTML = '';
                 for (const key in soundLibrary) {
                     const sound = soundLibrary[key];
-                    mixerState[key] = { player: null, finalNode: null, otherNodes: [], isPlaying: false, volume: null };
+                    mixerState[key] = { sound: null, isPlaying: false, volume: null };
                     const controlEl = document.createElement('div');
                     controlEl.className = 'sound-control';
                     controlEl.innerHTML = `
@@ -1066,35 +849,30 @@
                 }
             };
 
-            const toggleSound = async (key) => {
-                await Tone.start();
+            const toggleSound = (key) => {
                 const state = mixerState[key];
                 const icon = document.querySelector(`.sound-icon[data-sound="${key}"]`);
                 const slider = document.querySelector(`.volume-slider[data-sound="${key}"]`);
                 if (state.isPlaying) {
-                    state.player.stop();
-                    state.player.dispose();
-                    state.finalNode.dispose();
-                    state.otherNodes.forEach(node => node.dispose());
+                    state.sound.player.stop();
+                    state.sound.nodesToDispose.forEach(node => node.dispose());
                     state.volume.dispose();
                     state.isPlaying = false;
-                    state.player = null;
-                    state.finalNode = null;
-                    state.otherNodes = [];
+                    state.sound = null;
                     state.volume = null;
                     icon.classList.remove('active');
                     slider.classList.remove('visible');
                 } else {
-                    const { player, finalNode, otherNodes } = soundLibrary[key].factory();
-                    state.player = player;
-                    state.finalNode = finalNode;
-                    state.otherNodes = otherNodes;
+                    state.sound = soundLibrary[key].factory();
                     state.volume = new Tone.Volume(0).toDestination();
-                    state.finalNode.connect(state.volume);
+                    state.sound.finalNode.connect(state.volume);
                     const volumeValue = parseFloat(slider.value);
                     const dB = volumeValue === 0 ? -Infinity : (volumeValue * 40) - 40;
                     state.volume.volume.value = dB;
-                    state.player.start();
+                    state.sound.player.start(0);
+                    if (state.sound.toStart) {
+                        state.sound.toStart.forEach(node => node.start(0));
+                    }
                     state.isPlaying = true;
                     icon.classList.add('active');
                     slider.classList.add('visible');
@@ -1121,7 +899,14 @@
                 }
             });
 
-            soundMixerBtn.addEventListener('click', () => soundMixerModal.classList.add('visible'));
+            soundMixerBtn.addEventListener('click', async () => {
+                if (!audioInitialized) {
+                    await Tone.start();
+                    audioInitialized = true;
+                    console.log("Audio context started.");
+                }
+                soundMixerModal.classList.add('visible');
+            });
             closeMixerBtn.addEventListener('click', () => soundMixerModal.classList.remove('visible'));
             soundMixerModal.addEventListener('click', (e) => {
                 if (e.target === soundMixerModal) {
@@ -1135,12 +920,11 @@
             doneBtn.addEventListener('click', completeSessionEarly);
             addGeneralTaskBtn.addEventListener('click', addGeneralTask);
             clearCompletedBtn.addEventListener('click', clearCompletedTasks);
-            saveDataBtn.addEventListener('click', () => saveState(true));
             checklistTitle.addEventListener('blur', () => {
                 checklistTitleText = checklistTitle.textContent;
                 saveState();
             });
-            window.addEventListener('beforeunload', () => saveState(false));
+            window.addEventListener('beforeunload', () => saveState());
 
             init();
         }
