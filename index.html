@@ -239,7 +239,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK scripts -->
+    <!-- REBUILT: Firebase SDK and App Logic -->
     <script type="module">
         // Your Firebase configuration
         const firebaseConfig = {
@@ -262,22 +262,9 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // Attach the main app logic to the window object
-        window.startApp = (db, auth) => {
-            mainAppLogic(db, auth);
-        };
-        
-        window.startApp(db, auth);
-
-    </script>
-    
-    <script>
-    function mainAppLogic(db, auth) {
+        // This listener ensures the DOM is fully loaded before we try to access any elements
         document.addEventListener('DOMContentLoaded', () => {
-            // Firebase related state
-            let currentUser = null;
-            let unsubscribeFromFirestore = null;
-            let isInitialLoad = true;
+            // --- All app logic is now safely inside this listener ---
 
             // DOM Elements for Auth
             const authContainer = document.getElementById('auth-container');
@@ -288,6 +275,11 @@
             const userInfoDiv = document.getElementById('user-info');
             const userNameSpan = document.getElementById('user-name');
 
+            // Firebase related state
+            let currentUser = null;
+            let unsubscribeFromFirestore = null;
+            let isInitialLoad = true;
+
             // STATE MANAGEMENT
             let state;
             let currentEditingIndices = null; 
@@ -295,7 +287,7 @@
             let stopwatchInterval = null; 
 
             const defaultState = {
-                displayName: '', // NEW: For editable user name
+                displayName: '',
                 mainTitle: 'Productivity Hub',
                 currentTheme: 'classic',
                 checklists: { classic: [], 'wonder-woman': [], 'iron-man': [], batman: [] },
@@ -338,13 +330,12 @@
                                 calendar: { ...defaultState.calendar, ...savedState.calendar },
                                 stopwatch: { ...defaultState.stopwatch, ...savedState.stopwatch }
                             };
-                            // NEW: Set display name logic
                             if (!state.displayName) {
                                 state.displayName = user.displayName;
                             }
                         } else {
                             state = { ...defaultState };
-                            state.displayName = user.displayName; // Set default name for new user
+                            state.displayName = user.displayName;
                             saveState();
                         }
 
@@ -374,7 +365,11 @@
 
             // Login/Logout button handlers
             loginBtn.addEventListener('click', () => {
-                signInWithPopup(auth, provider).catch(error => console.error("Login failed:", error));
+                console.log("Login button clicked!"); // For debugging
+                signInWithPopup(auth, provider).catch(error => {
+                    console.error("Login failed:", error);
+                    alert("Login failed. Please ensure pop-ups are not blocked by your browser.");
+                });
             });
 
             logoutBtn.addEventListener('click', () => {
@@ -434,7 +429,6 @@
                 const childrenContainer = type !== 'subtopic' ? `<div class="children-container"></div>` : '';
                 const checkboxHTML = `<input type="checkbox" class="item-checkbox mr-2" ${item.completed ? 'checked' : ''}>`;
                 
-                // NEW: Add progress bar for subjects
                 const progressBarHTML = type === 'subject' ? `
                     <div class="progress-bar-container">
                         <div class="progress-bar-fill"></div>
@@ -459,7 +453,6 @@
                     ${childrenContainer}
                 `;
 
-                // Set indeterminate state for parent checkboxes
                 const checkbox = itemEl.querySelector('.item-checkbox');
                 if (type !== 'subtopic' && !item.completed) {
                     const progress = calculateProgress(item);
@@ -468,7 +461,6 @@
                     }
                 }
                 
-                // Update progress bar fill
                 if (type === 'subject') {
                     const progress = calculateProgress(item);
                     const percentage = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
@@ -525,7 +517,6 @@
             function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
             function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
             
-            // NEW: Recursive function to set completion status for all children
             function setChildrenCompleted(item, isCompleted) {
                 item.completed = isCompleted;
                 if (item.children) {
@@ -533,7 +524,6 @@
                 }
             }
 
-            // NEW: Recursive function to calculate progress
             function calculateProgress(item) {
                 let stats = { total: 0, completed: 0 };
                 if (!item.children || item.children.length === 0) {
@@ -549,7 +539,6 @@
                 return stats;
             }
             
-            // NEW: Update parent checkboxes based on children status
             function updateParentCompletion(indices) {
                 for (let i = indices.length - 1; i > 0; i--) {
                     const parentIndices = indices.slice(0, i);
@@ -568,7 +557,6 @@
                 const themeAchievements = state.achievements[state.currentTheme];
                 const oldMinorBadges = themeAchievements.minorBadges;
 
-                // 1. Calculate total completed items of any kind
                 let totalCompletedCount = 0;
                 function countCompleted(items) {
                     items.forEach(item => {
@@ -578,18 +566,16 @@
                 }
                 countCompleted(state.checklists[state.currentTheme]);
 
-                // 2. Update Minor Badges and Unlocked Quotes
                 const newMinorBadges = Math.floor(totalCompletedCount / 10);
                 if (newMinorBadges > oldMinorBadges) {
                     themeAchievements.minorBadges = newMinorBadges;
                     showLevelUpModal(`You've earned Minor Badge #${newMinorBadges}!`);
                 }
 
-                // 3. Check for new Grand Badges
                 const subject = getItemByIndices([indices[0]]);
                 const progress = calculateProgress(subject);
                 if (progress.completed === progress.total && !subject.badgeAwarded) {
-                    subject.badgeAwarded = true; // Mark as awarded
+                    subject.badgeAwarded = true;
                     themeAchievements.grandBadges = (themeAchievements.grandBadges || 0) + 1;
                     showLevelUpModal(`GRAND BADGE UNLOCKED!`, 'GRAND ACHIEVEMENT!');
                 }
@@ -621,7 +607,6 @@
             }
 
             // --- Other functions (calendar, notes, etc.) ---
-            // These remain largely the same, but are included for completeness.
             function openCalendarNoteModal(dateStr) {
                 currentCalendarDate = dateStr;
                 const bookmark = state.calendar.bookmarks[dateStr] || { note: '' };
@@ -943,7 +928,6 @@
                 });
             }
         });
-    }
     </script>
 </body>
 </html>
