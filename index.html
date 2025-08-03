@@ -42,7 +42,7 @@
         .collapsed .children-container { display: none; }
         .item-checkbox:checked ~ .item-title { text-decoration: line-through; color: var(--text-secondary); }
         
-        /* NEW: Progress Bar Styles */
+        /* Progress Bar Styles */
         .progress-bar-container {
             height: 8px;
             background-color: var(--border-color);
@@ -95,7 +95,6 @@
                 <h1 id="main-title" class="text-4xl font-bold accent-primary cursor-pointer" contenteditable="true">Productivity Hub</h1>
                 <span id="save-indicator" class="text-sm text-secondary transition-opacity duration-500 opacity-0">✓ Saved</span>
             </div>
-            <!-- MODIFIED: User info and Logout button -->
             <div id="user-info" class="hidden items-center space-x-4">
                 <span class="text-secondary">Welcome, <span id="user-name" class="font-bold text-primary cursor-pointer underline decoration-dotted" contenteditable="true"></span>!</span>
                 <button id="logout-btn" class="btn-theme-secondary p-2 rounded-md">Logout</button>
@@ -138,7 +137,6 @@
                     <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center"></div>
                 </div>
 
-                 <!-- MODIFIED: Achievements section with Grand Badges -->
                  <div class="bg-secondary p-4 rounded-lg shadow-md">
                     <h2 class="text-2xl font-bold mb-2 text-primary">Achievements</h2>
                     <div class="flex justify-around items-center">
@@ -266,7 +264,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- All app logic is now safely inside this listener ---
 
-            // DOM Elements for Auth
+            // DOM Elements
             const authContainer = document.getElementById('auth-container');
             const loadingContainer = document.getElementById('loading-container');
             const appContainer = document.getElementById('app-container');
@@ -274,13 +272,14 @@
             const logoutBtn = document.getElementById('logout-btn');
             const userInfoDiv = document.getElementById('user-info');
             const userNameSpan = document.getElementById('user-name');
-
+            const stopwatchDisplay = document.getElementById('stopwatch-display');
+            const checklistContainer = document.getElementById('checklist-container');
+            
             // Firebase related state
             let currentUser = null;
             let unsubscribeFromFirestore = null;
-            let isInitialLoad = true;
-
-            // STATE MANAGEMENT
+            
+            // App State
             let state;
             let currentEditingIndices = null; 
             let currentCalendarDate = null; 
@@ -338,13 +337,9 @@
                             state.displayName = user.displayName;
                             saveState();
                         }
-
-                        if (isInitialLoad) {
-                            initAppUI();
-                            isInitialLoad = false;
-                        } else {
-                             applyTheme(state.currentTheme, false);
-                        }
+                        
+                        // Render the full UI with the loaded state
+                        renderFullUI();
 
                         loadingContainer.classList.replace('flex', 'hidden');
                         appContainer.classList.remove('hidden');
@@ -359,13 +354,11 @@
                     loadingContainer.classList.replace('flex', 'hidden');
                     appContainer.classList.add('hidden');
                     userInfoDiv.classList.add('hidden');
-                    isInitialLoad = true;
                 }
             });
 
             // Login/Logout button handlers
             loginBtn.addEventListener('click', () => {
-                console.log("Login button clicked!"); // For debugging
                 signInWithPopup(auth, provider).catch(error => {
                     console.error("Login failed:", error);
                     alert("Login failed. Please ensure pop-ups are not blocked by your browser.");
@@ -390,7 +383,12 @@
                 }
             }
 
-            // --- THEME ---
+            // --- RENDER FUNCTIONS ---
+            function renderFullUI() {
+                applyTheme(state.currentTheme, false);
+                updateStopwatchDisplay();
+            }
+
             function applyTheme(theme, doSave = true) {
                 state.currentTheme = theme;
                 document.body.className = `theme-${theme} bg-primary text-primary`;
@@ -404,10 +402,8 @@
                 if (doSave) saveState();
             }
             
-            // --- CHECKLIST LOGIC ---
             function renderChecklist(searchTerm = '') {
                 const currentChecklist = state.checklists[state.currentTheme] || [];
-                const checklistContainer = document.getElementById('checklist-container');
                 checklistContainer.innerHTML = '';
                 if (currentChecklist.length === 0 && !searchTerm) {
                     checklistContainer.innerHTML = `<p class="text-secondary">No subjects yet. Add one to get started!</p>`;
@@ -477,17 +473,8 @@
                 return itemEl;
             }
             
-            // --- STOPWATCH ---
-            const stopwatchDisplay = document.getElementById('stopwatch-display');
-            function formatTime(ms) {
-                const totalSeconds = Math.floor(ms / 1000);
-                const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-                const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-                const seconds = String(totalSeconds % 60).padStart(2, '0');
-                return `${hours}:${minutes}:${seconds}`;
-            }
-
             function updateStopwatchDisplay() {
+                if (!state || !state.stopwatch) return;
                 if (state.stopwatch.isRunning) {
                     const now = Date.now();
                     const totalElapsedTime = state.stopwatch.elapsedTime + (now - state.stopwatch.startTime);
@@ -739,194 +726,185 @@
                 if (isCompleted) new Audio('https://www.soundjay.com/buttons/sounds/button-1.mp3').play();
             }
 
-            // --- Main UI Initialization ---
-            function initAppUI() {
-                applyTheme(state.currentTheme, false);
-                if (state.stopwatch.isRunning) {
-                    stopwatchInterval = setInterval(updateStopwatchDisplay, 1000);
+            // --- EVENT LISTENERS ---
+            userNameSpan.addEventListener('blur', () => {
+                const newName = userNameSpan.textContent.trim();
+                if (newName && newName !== state.displayName) {
+                    state.displayName = newName;
+                    saveState();
+                } else {
+                    userNameSpan.textContent = state.displayName; // Revert if empty
                 }
-                updateStopwatchDisplay();
+            });
 
-                // --- EVENT LISTENERS ---
-                userNameSpan.addEventListener('blur', () => {
-                    const newName = userNameSpan.textContent.trim();
-                    if (newName && newName !== state.displayName) {
-                        state.displayName = newName;
-                        saveState();
-                    } else {
-                        userNameSpan.textContent = state.displayName; // Revert if empty
-                    }
-                });
+            checklistContainer.addEventListener('click', (e) => {
+                const target = e.target;
+                const itemEl = target.closest('.checklist-item');
+                if (!itemEl) return;
+                const indices = itemEl.dataset.indices.split(',').map(Number);
+                let item = getItemByIndices(indices);
+                if (!item) return;
 
-                document.getElementById('checklist-container').addEventListener('click', (e) => {
-                    const target = e.target;
-                    const itemEl = target.closest('.checklist-item');
-                    if (!itemEl) return;
-                    const indices = itemEl.dataset.indices.split(',').map(Number);
-                    let item = getItemByIndices(indices);
-                    if (!item) return;
-
-                    if (target.classList.contains('item-checkbox')) {
-                        setChildrenCompleted(item, target.checked);
-                        updateParentCompletion(indices);
-                        updateAchievements(indices);
-                        renderChecklist();
-                        saveState();
-                    } else if (target.classList.contains('collapsible-icon')) {
-                        item.collapsed = !item.collapsed;
-                        renderChecklist();
-                        saveState();
-                    } else if (target.classList.contains('delete-item-btn')) {
-                        if (confirm('Are you sure?')) {
-                            deleteItemByIndices(indices);
-                            renderChecklist();
-                            saveState();
-                        }
-                    } else if (target.classList.contains('add-child-btn')) {
-                        if (!item.children) item.children = [];
-                        const childType = { subject: 'section', section: 'topic', topic: 'subtopic' }[itemEl.dataset.type];
-                        item.children.push({ title: `New ${childType}`, completed: false, children: [], collapsed: false, notes: { text: '', attachments: [] } });
-                        item.collapsed = false;
-                        renderChecklist();
-                        saveState();
-                        const newItemEl = document.querySelector(`[data-indices='${[...indices, item.children.length - 1].join(',')}']`);
-                        if(newItemEl) newItemEl.querySelector('.item-title').click();
-                    } else if (target.classList.contains('item-title')) {
-                        target.classList.add('hidden');
-                        const input = target.nextElementSibling;
-                        input.classList.remove('hidden');
-                        input.focus();
-                        input.select();
-                    } else if (target.classList.contains('notes-btn')) {
-                        openNotesModal(indices);
-                    }
-                });
-                document.getElementById('checklist-container').addEventListener('focusout', (e) => {
-                    if (e.target.classList.contains('item-edit-input')) {
-                        const input = e.target;
-                        const itemEl = input.closest('.checklist-item');
-                        const indices = itemEl.dataset.indices.split(',').map(Number);
-                        let item = getItemByIndices(indices);
-                        item.title = input.value.trim() || item.title;
-                        renderChecklist();
-                        saveState();
-                    }
-                });
-                document.getElementById('checklist-container').addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && e.target.classList.contains('item-edit-input')) e.target.blur();
-                });
-                stopwatchDisplay.addEventListener('click', () => {
-                    const { isRunning } = state.stopwatch;
-                    if (isRunning) {
-                        state.stopwatch.elapsedTime += Date.now() - state.stopwatch.startTime;
-                        state.stopwatch.isRunning = false;
-                        clearInterval(stopwatchInterval);
-                    } else {
-                        state.stopwatch.startTime = Date.now();
-                        state.stopwatch.isRunning = true;
-                        stopwatchInterval = setInterval(updateStopwatchDisplay, 1000);
-                    }
-                    saveState();
-                });
-                stopwatchDisplay.addEventListener('dblclick', () => {
-                    state.stopwatch = { startTime: 0, elapsedTime: 0, isRunning: false };
-                    clearInterval(stopwatchInterval);
-                    stopwatchDisplay.textContent = formatTime(0);
-                    saveState();
-                });
-                document.getElementById('theme-switcher').addEventListener('click', e => { if (e.target.matches('.theme-btn')) { applyTheme(e.target.dataset.theme); } });
-                document.getElementById('add-subject-btn').addEventListener('click', () => {
-                    state.checklists[state.currentTheme].push({ title: 'New Subject', completed: false, collapsed: false, children: [], notes: { text: '', attachments: [] } });
+                if (target.classList.contains('item-checkbox')) {
+                    setChildrenCompleted(item, target.checked);
+                    updateParentCompletion(indices);
+                    updateAchievements(indices);
                     renderChecklist();
                     saveState();
-                });
-                document.getElementById('search-bar').addEventListener('input', e => renderChecklist(e.target.value));
-                document.getElementById('main-title').addEventListener('blur', e => { state.mainTitle = e.target.textContent; saveState(); });
-                document.getElementById('main-quote').addEventListener('blur', e => { state.achievements[state.currentTheme].mainQuote = e.target.textContent; saveState(); });
-                document.getElementById('focus-25').addEventListener('click', () => startFocusSession(25));
-                document.getElementById('focus-50').addEventListener('click', () => startFocusSession(50));
-                document.getElementById('prev-month').addEventListener('click', () => { const d = new Date(state.calendar.date); d.setMonth(d.getMonth() - 1); state.calendar.date = d.toISOString(); renderCalendar(); saveState(); });
-                document.getElementById('next-month').addEventListener('click', () => { const d = new Date(state.calendar.date); d.setMonth(d.getMonth() + 1); state.calendar.date = d.toISOString(); renderCalendar(); saveState(); });
-                document.getElementById('save-calendar-note').addEventListener('click', () => {
-                    if (!currentCalendarDate) return;
-                    if (!state.calendar.bookmarks[currentCalendarDate]) state.calendar.bookmarks[currentCalendarDate] = {};
-                    state.calendar.bookmarks[currentCalendarDate].note = document.getElementById('calendar-note-input').value;
-                    renderCalendar();
+                } else if (target.classList.contains('collapsible-icon')) {
+                    item.collapsed = !item.collapsed;
+                    renderChecklist();
                     saveState();
-                    closeModal('calendar-note-modal');
-                });
-                document.getElementById('delete-calendar-note').addEventListener('click', () => {
-                    if (!currentCalendarDate) return;
-                    delete state.calendar.bookmarks[currentCalendarDate];
-                    renderCalendar();
+                } else if (target.classList.contains('delete-item-btn')) {
+                    if (confirm('Are you sure?')) {
+                        deleteItemByIndices(indices);
+                        renderChecklist();
+                        saveState();
+                    }
+                } else if (target.classList.contains('add-child-btn')) {
+                    if (!item.children) item.children = [];
+                    const childType = { subject: 'section', section: 'topic', topic: 'subtopic' }[itemEl.dataset.type];
+                    item.children.push({ title: `New ${childType}`, completed: false, children: [], collapsed: false, notes: { text: '', attachments: [] } });
+                    item.collapsed = false;
+                    renderChecklist();
                     saveState();
-                    closeModal('calendar-note-modal');
-                });
-                document.getElementById('close-calendar-note-modal').addEventListener('click', () => closeModal('calendar-note-modal'));
-                document.getElementById('close-notes-modal').addEventListener('click', () => { saveNotes(); closeModal('notes-modal'); });
-                document.getElementById('item-note-text').addEventListener('blur', saveNotes);
-                document.getElementById('add-link-btn').addEventListener('click', () => {
-                    const url = document.getElementById('attachment-input').value.trim();
-                    if (url && currentEditingIndices) {
-                        const item = getItemByIndices(currentEditingIndices);
-                        if (!item.notes.attachments) item.notes.attachments = [];
-                        item.notes.attachments.push({ type: 'link', url });
-                        renderAttachments(item.notes.attachments);
-                        saveState();
-                        document.getElementById('attachment-input').value = '';
-                    }
-                });
-                document.getElementById('attachments-container').addEventListener('click', e => {
-                    if (e.target.classList.contains('delete-attachment-btn')) {
-                        const index = e.target.dataset.index;
-                        const item = getItemByIndices(currentEditingIndices);
-                        item.notes.attachments.splice(index, 1);
-                        renderAttachments(item.notes.attachments);
-                        saveState();
-                    } else if (e.target.classList.contains('play-youtube-btn')) {
-                        try {
-                            const videoId = new URL(e.target.dataset.url).searchParams.get('v');
-                            if (videoId) {
-                                document.getElementById('youtube-player-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-                                openModal('youtube-player-modal');
-                            }
-                        } catch (error) {
-                            console.error("Invalid YouTube URL:", error);
+                    const newItemEl = document.querySelector(`[data-indices='${[...indices, item.children.length - 1].join(',')}']`);
+                    if(newItemEl) newItemEl.querySelector('.item-title').click();
+                } else if (target.classList.contains('item-title')) {
+                    target.classList.add('hidden');
+                    const input = target.nextElementSibling;
+                    input.classList.remove('hidden');
+                    input.focus();
+                    input.select();
+                } else if (target.classList.contains('notes-btn')) {
+                    openNotesModal(indices);
+                }
+            });
+            checklistContainer.addEventListener('focusout', (e) => {
+                if (e.target.classList.contains('item-edit-input')) {
+                    const input = e.target;
+                    const itemEl = input.closest('.checklist-item');
+                    const indices = itemEl.dataset.indices.split(',').map(Number);
+                    let item = getItemByIndices(indices);
+                    item.title = input.value.trim() || item.title;
+                    renderChecklist();
+                    saveState();
+                }
+            });
+            checklistContainer.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.target.classList.contains('item-edit-input')) e.target.blur();
+            });
+            stopwatchDisplay.addEventListener('click', () => {
+                const { isRunning } = state.stopwatch;
+                if (isRunning) {
+                    state.stopwatch.elapsedTime += Date.now() - state.stopwatch.startTime;
+                    state.stopwatch.isRunning = false;
+                    clearInterval(stopwatchInterval);
+                } else {
+                    state.stopwatch.startTime = Date.now();
+                    state.stopwatch.isRunning = true;
+                    stopwatchInterval = setInterval(updateStopwatchDisplay, 1000);
+                }
+                saveState();
+            });
+            stopwatchDisplay.addEventListener('dblclick', () => {
+                state.stopwatch = { startTime: 0, elapsedTime: 0, isRunning: false };
+                clearInterval(stopwatchInterval);
+                stopwatchDisplay.textContent = formatTime(0);
+                saveState();
+            });
+            document.getElementById('theme-switcher').addEventListener('click', e => { if (e.target.matches('.theme-btn')) { applyTheme(e.target.dataset.theme); } });
+            document.getElementById('add-subject-btn').addEventListener('click', () => {
+                state.checklists[state.currentTheme].push({ title: 'New Subject', completed: false, collapsed: false, children: [], notes: { text: '', attachments: [] } });
+                renderChecklist();
+                saveState();
+            });
+            document.getElementById('search-bar').addEventListener('input', e => renderChecklist(e.target.value));
+            document.getElementById('main-title').addEventListener('blur', e => { state.mainTitle = e.target.textContent; saveState(); });
+            document.getElementById('main-quote').addEventListener('blur', e => { state.achievements[state.currentTheme].mainQuote = e.target.textContent; saveState(); });
+            document.getElementById('focus-25').addEventListener('click', () => startFocusSession(25));
+            document.getElementById('focus-50').addEventListener('click', () => startFocusSession(50));
+            document.getElementById('prev-month').addEventListener('click', () => { const d = new Date(state.calendar.date); d.setMonth(d.getMonth() - 1); state.calendar.date = d.toISOString(); renderCalendar(); saveState(); });
+            document.getElementById('next-month').addEventListener('click', () => { const d = new Date(state.calendar.date); d.setMonth(d.getMonth() + 1); state.calendar.date = d.toISOString(); renderCalendar(); saveState(); });
+            document.getElementById('save-calendar-note').addEventListener('click', () => {
+                if (!currentCalendarDate) return;
+                if (!state.calendar.bookmarks[currentCalendarDate]) state.calendar.bookmarks[currentCalendarDate] = {};
+                state.calendar.bookmarks[currentCalendarDate].note = document.getElementById('calendar-note-input').value;
+                renderCalendar();
+                saveState();
+                closeModal('calendar-note-modal');
+            });
+            document.getElementById('delete-calendar-note').addEventListener('click', () => {
+                if (!currentCalendarDate) return;
+                delete state.calendar.bookmarks[currentCalendarDate];
+                renderCalendar();
+                saveState();
+                closeModal('calendar-note-modal');
+            });
+            document.getElementById('close-calendar-note-modal').addEventListener('click', () => closeModal('calendar-note-modal'));
+            document.getElementById('close-notes-modal').addEventListener('click', () => { saveNotes(); closeModal('notes-modal'); });
+            document.getElementById('item-note-text').addEventListener('blur', saveNotes);
+            document.getElementById('add-link-btn').addEventListener('click', () => {
+                const url = document.getElementById('attachment-input').value.trim();
+                if (url && currentEditingIndices) {
+                    const item = getItemByIndices(currentEditingIndices);
+                    if (!item.notes.attachments) item.notes.attachments = [];
+                    item.notes.attachments.push({ type: 'link', url });
+                    renderAttachments(item.notes.attachments);
+                    saveState();
+                    document.getElementById('attachment-input').value = '';
+                }
+            });
+            document.getElementById('attachments-container').addEventListener('click', e => {
+                if (e.target.classList.contains('delete-attachment-btn')) {
+                    const index = e.target.dataset.index;
+                    const item = getItemByIndices(currentEditingIndices);
+                    item.notes.attachments.splice(index, 1);
+                    renderAttachments(item.notes.attachments);
+                    saveState();
+                } else if (e.target.classList.contains('play-youtube-btn')) {
+                    try {
+                        const videoId = new URL(e.target.dataset.url).searchParams.get('v');
+                        if (videoId) {
+                            document.getElementById('youtube-player-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                            openModal('youtube-player-modal');
                         }
+                    } catch (error) {
+                        console.error("Invalid YouTube URL:", error);
                     }
+                }
+            });
+            document.getElementById('close-youtube-modal').addEventListener('click', () => {
+                document.getElementById('youtube-player-container').innerHTML = '';
+                closeModal('youtube-player-modal');
+            });
+            document.getElementById('bulk-add-btn').addEventListener('click', () => openModal('bulk-add-modal'));
+            document.getElementById('close-bulk-add-modal').addEventListener('click', () => closeModal('bulk-add-modal'));
+            document.getElementById('process-bulk-add').addEventListener('click', processBulkAdd);
+            document.getElementById('achievement-badge').addEventListener('click', () => {
+                const quoteList = document.getElementById('quote-list');
+                quoteList.innerHTML = '';
+                const themeQuotes = quotes[state.currentTheme];
+                const unlockedCount = state.achievements[state.currentTheme].minorBadges || 0;
+                themeQuotes.forEach((quote, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'p-2 border-b border-theme';
+                    li.textContent = `"${quote}"`;
+                    if (index > unlockedCount) {
+                        li.classList.add('text-secondary', 'italic');
+                        li.textContent += ' (Locked)';
+                    } else {
+                        li.classList.add('text-primary');
+                    }
+                    quoteList.appendChild(li);
                 });
-                document.getElementById('close-youtube-modal').addEventListener('click', () => {
-                    document.getElementById('youtube-player-container').innerHTML = '';
-                    closeModal('youtube-player-modal');
-                });
-                document.getElementById('bulk-add-btn').addEventListener('click', () => openModal('bulk-add-modal'));
-                document.getElementById('close-bulk-add-modal').addEventListener('click', () => closeModal('bulk-add-modal'));
-                document.getElementById('process-bulk-add').addEventListener('click', processBulkAdd);
-                document.getElementById('achievement-badge').addEventListener('click', () => {
-                    const quoteList = document.getElementById('quote-list');
-                    quoteList.innerHTML = '';
-                    const themeQuotes = quotes[state.currentTheme];
-                    const unlockedCount = state.achievements[state.currentTheme].minorBadges || 0;
-                    themeQuotes.forEach((quote, index) => {
-                        const li = document.createElement('li');
-                        li.className = 'p-2 border-b border-theme';
-                        li.textContent = `"${quote}"`;
-                        if (index > unlockedCount) {
-                            li.classList.add('text-secondary', 'italic');
-                            li.textContent += ' (Locked)';
-                        } else {
-                            li.classList.add('text-primary');
-                        }
-                        quoteList.appendChild(li);
-                    });
-                    openModal('quote-modal');
-                });
-                document.getElementById('close-quote-modal').addEventListener('click', () => closeModal('quote-modal'));
-                document.getElementById('close-level-up-modal').addEventListener('click', () => closeModal('level-up-modal'));
-                document.getElementById('calendar-grid').addEventListener('click', e => {
-                    if (e.target.dataset.date) openCalendarNoteModal(e.target.dataset.date);
-                });
-            }
+                openModal('quote-modal');
+            });
+            document.getElementById('close-quote-modal').addEventListener('click', () => closeModal('quote-modal'));
+            document.getElementById('close-level-up-modal').addEventListener('click', () => closeModal('level-up-modal'));
+            document.getElementById('calendar-grid').addEventListener('click', e => {
+                if (e.target.dataset.date) openCalendarNoteModal(e.target.date);
+            });
         });
     </script>
 </body>
