@@ -45,6 +45,15 @@
             border-radius: var(--button-radius); padding: 0.5rem 1rem;
         }
         .btn-outline:hover { background-color: var(--primary-color); color: var(--main-bg); }
+        /* --- FIX for Logout Button Visibility --- */
+        header .btn-outline {
+            color: var(--main-bg);
+            border-color: var(--main-bg);
+        }
+        header .btn-outline:hover {
+            background-color: var(--main-bg);
+            color: var(--primary-color);
+        }
 
         .checklist-item { border-left: 4px solid var(--primary-color); transition: all 0.2s ease-in-out; }
         .priority-flag { border-left-color: var(--danger-color) !important; background-color: oklab(from var(--danger-color) l a b / 20%);}
@@ -56,7 +65,6 @@
         .app-card { background-color: var(--card-bg); backdrop-filter: blur(4px); }
         .item-title:focus { outline: 1px dashed var(--accent-color); }
         
-        /* --- FIREBASE UI STYLES --- */
         #login-screen {
             display: flex;
             flex-direction: column;
@@ -317,10 +325,10 @@
                 dayEl.className = 'relative text-xs p-1 rounded-full cursor-pointer text-center transition-all';
                 const bookmark = bookmarks[dateString];
                 if (bookmark) dayEl.style.border = `2px solid ${bookmark.color}`;
-                // --- FIX for Calendar Highlight ---
                 if (date.getTime() === today.getTime()) {
                     dayEl.style.backgroundColor = 'var(--primary-color)';
-                    dayEl.classList.add('text-white', 'font-bold');
+                    dayEl.style.color = 'var(--main-bg)';
+                    dayEl.classList.add('font-bold');
                 }
                 grid.appendChild(dayEl);
             }
@@ -448,7 +456,7 @@
 
             modal.innerHTML = `
                 <h3 class="font-bold text-lg mb-4">Bookmark for ${dateString}</h3>
-                <textarea id="bookmark-note-input" class="w-full p-2 border rounded mb-4 text-black" rows="3" placeholder="Add a note...">${bookmark.note}</textarea>
+                <textarea id="bookmark-note-input" class="w-full p-2 border rounded mb-4 text-black" rows="3" placeholder="Add a note...">${bookmark.note || ''}</textarea>
                 <div class="flex justify-around mb-6">${colorsHTML}</div>
                 <div class="flex justify-end gap-2">
                     <button id="delete-bookmark-btn" class="bg-red-500 text-white px-4 py-2" style="border-radius: var(--button-radius)">Delete</button>
@@ -621,7 +629,6 @@
                 }
             });
 
-            // --- FIX: Stopwatch Functionality ---
             const startStopBtn = document.getElementById('start-stop-btn');
             const resetBtn = document.getElementById('reset-btn');
 
