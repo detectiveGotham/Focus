@@ -252,129 +252,500 @@
         // Import and initialize Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firestore.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // This listener ensures the DOM is fully loaded before we try to access any elements
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- All app logic is now safely inside this listener ---
+        // --- App State and Constants ---
+        let state;
+        let currentUser = null;
+        let unsubscribeFromFirestore = null;
+        let stopwatchInterval = null; 
+        let currentEditingIndices = null; 
+        let currentCalendarDate = null; 
+        let appInitialized = false; // Flag to ensure event listeners are set only once
 
-            // DOM Elements
-            const authContainer = document.getElementById('auth-container');
-            const loadingContainer = document.getElementById('loading-container');
-            const appContainer = document.getElementById('app-container');
-            const loginBtn = document.getElementById('login-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-            const userInfoDiv = document.getElementById('user-info');
-            const userNameSpan = document.getElementById('user-name');
-            const stopwatchDisplay = document.getElementById('stopwatch-display');
-            const checklistContainer = document.getElementById('checklist-container');
-            
-            // Firebase related state
-            let currentUser = null;
-            let unsubscribeFromFirestore = null;
-            
-            // App State
-            let state;
-            let currentEditingIndices = null; 
-            let currentCalendarDate = null; 
-            let stopwatchInterval = null; 
+        const defaultState = {
+            displayName: '',
+            mainTitle: 'Productivity Hub',
+            currentTheme: 'classic',
+            checklists: { classic: [], 'wonder-woman': [], 'iron-man': [], batman: [] },
+            stopwatch: { startTime: 0, elapsedTime: 0, isRunning: false },
+            calendar: { date: new Date().toISOString(), bookmarks: {} },
+            achievements: {
+                classic: { minorBadges: 0, grandBadges: 0, mainQuote: "The future depends on what you do today." },
+                'wonder-woman': { minorBadges: 0, grandBadges: 0, mainQuote: "If no one else will defend the world, then I must." },
+                'iron-man': { minorBadges: 0, grandBadges: 0, mainQuote: "I am Iron Man." },
+                batman: { minorBadges: 0, grandBadges: 0, mainQuote: "It's not who I am underneath, but what I do that defines me." }
+            },
+        };
 
-            const defaultState = {
-                displayName: '',
-                mainTitle: 'Productivity Hub',
-                currentTheme: 'classic',
-                checklists: { classic: [], 'wonder-woman': [], 'iron-man': [], batman: [] },
-                stopwatch: { startTime: 0, elapsedTime: 0, isRunning: false },
-                calendar: { date: new Date().toISOString(), bookmarks: {} },
-                achievements: {
-                    classic: { minorBadges: 0, grandBadges: 0, mainQuote: "The future depends on what you do today." },
-                    'wonder-woman': { minorBadges: 0, grandBadges: 0, mainQuote: "If no one else will defend the world, then I must." },
-                    'iron-man': { minorBadges: 0, grandBadges: 0, mainQuote: "I am Iron Man." },
-                    batman: { minorBadges: 0, grandBadges: 0, mainQuote: "It's not who I am underneath, but what I do that defines me." }
-                },
-            };
+        const quotes = {
+            classic: ["The future depends on what you do today.", "Well done is better than well said.", "The secret of getting ahead is getting started.", "A year from now you may wish you had started today.", "The best way to predict the future is to create it."],
+            'wonder-woman': ["If no one else will defend the world, then I must.", "It's about what you believe. And I believe in love.", "What one does when faced with the truth is more difficult than you'd think.", "I will fight for those who cannot fight for themselves.", "Peace is a virtue. A state of mind, a disposition for benevolence, confidence and justice."],
+            'iron-man': ["I am Iron Man.", "Sometimes you gotta run before you can walk.", "The truth is... I am Iron Man.", "I build neat stuff, got a great girl, occasionally save the world. So why can't I sleep?", "Heroes are made by the paths they choose, not the powers they are graced with."],
+            batman: ["It's not who I am underneath, but what I do that defines me.", "I'm Batman.", "All men have limits. They learn what they are and learn not to exceed them. I ignore mine.", "A hero can be anyone.", "Why do we fall? So that we can learn to pick ourselves up."]
+        };
 
-            const quotes = {
-                classic: ["The future depends on what you do today.", "Well done is better than well said.", "The secret of getting ahead is getting started.", "A year from now you may wish you had started today.", "The best way to predict the future is to create it."],
-                'wonder-woman': ["If no one else will defend the world, then I must.", "It's about what you believe. And I believe in love.", "What one does when faced with the truth is more difficult than you'd think.", "I will fight for those who cannot fight for themselves.", "Peace is a virtue. A state of mind, a disposition for benevolence, confidence and justice."],
-                'iron-man': ["I am Iron Man.", "Sometimes you gotta run before you can walk.", "The truth is... I am Iron Man.", "I build neat stuff, got a great girl, occasionally save the world. So why can't I sleep?", "Heroes are made by the paths they choose, not the powers they are graced with."],
-                batman: ["It's not who I am underneath, but what I do that defines me.", "I'm Batman.", "All men have limits. They learn what they are and learn not to exceed them. I ignore mine.", "A hero can be anyone.", "Why do we fall? So that we can learn to pick ourselves up."]
-            };
+        const badgeInfo = {
+            classic: {
+                minor: { name: 'Milestones', icon: (count) => `<span>${count}</span>` },
+                grand: { name: 'Completions', icon: (count) => `<span>🏆</span><span>${count}</span>` }
+            },
+            'wonder-woman': {
+                minor: { name: 'Victories', icon: (count) => `<span>${count}</span>` },
+                grand: { name: 'Triumphs', icon: (count) => `<span>⭐</span><span>${count}</span>` }
+            },
+            'iron-man': {
+                minor: { name: 'Upgrades', icon: (count) => `<span>${count}</span>` },
+                grand: { name: 'Protocols', icon: (count) => `<span>⚙️</span><span>${count}</span>` }
+            },
+            batman: {
+                minor: { name: 'Cases Solved', icon: (count) => `<span>${count}</span>` },
+                grand: { name: 'Missions', icon: (count) => `<span>🦇</span><span>${count}</span>` }
+            }
+        };
 
-            const badgeInfo = {
-                classic: {
-                    minor: { name: 'Milestones', icon: (count) => `<span>${count}</span>` },
-                    grand: { name: 'Completions', icon: (count) => `<span>🏆</span><span>${count}</span>` }
-                },
-                'wonder-woman': {
-                    minor: { name: 'Victories', icon: (count) => `<span>${count}</span>` },
-                    grand: { name: 'Triumphs', icon: (count) => `<span>⭐</span><span>${count}</span>` }
-                },
-                'iron-man': {
-                    minor: { name: 'Upgrades', icon: (count) => `<span>${count}</span>` },
-                    grand: { name: 'Protocols', icon: (count) => `<span>⚙️</span><span>${count}</span>` }
-                },
-                batman: {
-                    minor: { name: 'Cases Solved', icon: (count) => `<span>${count}</span>` },
-                    grand: { name: 'Missions', icon: (count) => `<span>🦇</span><span>${count}</span>` }
-                }
-            };
+        // --- DOM Elements ---
+        const authContainer = document.getElementById('auth-container');
+        const loadingContainer = document.getElementById('loading-container');
+        const appContainer = document.getElementById('app-container');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userInfoDiv = document.getElementById('user-info');
+        const userNameSpan = document.getElementById('user-name');
+        const stopwatchDisplay = document.getElementById('stopwatch-display');
+        const checklistContainer = document.getElementById('checklist-container');
 
-            // Firebase Auth Listener
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUser = user;
-                    authContainer.style.display = 'none';
-                    loadingContainer.classList.replace('hidden', 'flex');
-                    appContainer.classList.add('hidden');
-                    
-                    const userDocRef = doc(db, "user_data", user.uid);
-                    if (unsubscribeFromFirestore) unsubscribeFromFirestore();
+        // --- Firebase Functions ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                authContainer.style.display = 'none';
+                loadingContainer.classList.replace('hidden', 'flex');
+                appContainer.classList.add('hidden');
+                
+                const userDocRef = doc(db, "user_data", user.uid);
+                if (unsubscribeFromFirestore) unsubscribeFromFirestore();
 
-                    unsubscribeFromFirestore = onSnapshot(userDocRef, (docSnap) => {
-                        if (docSnap.exists()) {
-                            const savedState = docSnap.data();
-                             state = { 
-                                ...defaultState, 
-                                ...savedState,
-                                achievements: { ...defaultState.achievements, ...savedState.achievements },
-                                checklists: { ...defaultState.checklists, ...savedState.checklists },
-                                calendar: { ...defaultState.calendar, ...savedState.calendar },
-                                stopwatch: { ...defaultState.stopwatch, ...savedState.stopwatch }
-                            };
-                            if (!state.displayName) {
-                                state.displayName = user.displayName;
-                            }
-                        } else {
-                            state = { ...defaultState };
+                unsubscribeFromFirestore = onSnapshot(userDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const savedState = docSnap.data();
+                         state = { 
+                            ...defaultState, 
+                            ...savedState,
+                            achievements: { ...defaultState.achievements, ...savedState.achievements },
+                            checklists: { ...defaultState.checklists, ...savedState.checklists },
+                            calendar: { ...defaultState.calendar, ...savedState.calendar },
+                            stopwatch: { ...defaultState.stopwatch, ...savedState.stopwatch }
+                        };
+                        if (!state.displayName) {
                             state.displayName = user.displayName;
-                            saveState();
                         }
-                        
-                        renderFullUI();
+                    } else {
+                        state = { ...defaultState };
+                        state.displayName = user.displayName;
+                        saveState();
+                    }
+                    
+                    if (!appInitialized) {
+                        initializeAppUI(); // Set up all event listeners ONCE
+                    }
+                    renderFullUI(); // Re-render the UI with new data
 
-                        loadingContainer.classList.replace('flex', 'hidden');
-                        appContainer.classList.remove('hidden');
-                        userInfoDiv.classList.remove('hidden');
-                        userNameSpan.textContent = state.displayName;
-                    });
-
-                } else {
-                    currentUser = null;
-                    if (unsubscribeFromFirestore) unsubscribeFromFirestore();
-                    authContainer.style.display = 'flex';
                     loadingContainer.classList.replace('flex', 'hidden');
-                    appContainer.classList.add('hidden');
-                    userInfoDiv.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    userInfoDiv.classList.remove('hidden');
+                    userNameSpan.textContent = state.displayName;
+                });
+
+            } else {
+                currentUser = null;
+                if (unsubscribeFromFirestore) unsubscribeFromFirestore();
+                authContainer.style.display = 'flex';
+                loadingContainer.classList.replace('flex', 'hidden');
+                appContainer.classList.add('hidden');
+                userInfoDiv.classList.add('hidden');
+                appInitialized = false; // Reset for next login
+            }
+        });
+
+        async function saveState() {
+            if (!currentUser || !state) return;
+            try {
+                const userDocRef = doc(db, "user_data", currentUser.uid);
+                await setDoc(userDocRef, state); 
+                const indicator = document.getElementById('save-indicator');
+                indicator.classList.remove('opacity-0');
+                setTimeout(() => indicator.classList.add('opacity-0'), 1500);
+            } catch (e) {
+                console.error("Error saving state to Firestore:", e);
+            }
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function renderFullUI() {
+            applyTheme(state.currentTheme, false);
+            updateStopwatchDisplay();
+        }
+
+        function applyTheme(theme, doSave = true) {
+            state.currentTheme = theme;
+            document.body.className = `theme-${theme} bg-primary text-primary`;
+            document.querySelectorAll('#theme-switcher .theme-btn').forEach(btn => {
+                btn.style.borderColor = btn.dataset.theme === theme ? 'var(--accent-primary)' : 'transparent';
+            });
+            document.getElementById('main-title').textContent = state.mainTitle;
+            updateBadgeUI();
+            renderCalendar();
+            renderChecklist();
+            if (doSave) saveState();
+        }
+        
+        function renderChecklist(searchTerm = '') {
+            const currentChecklist = state.checklists[state.currentTheme] || [];
+            checklistContainer.innerHTML = '';
+            if (currentChecklist.length === 0 && !searchTerm) {
+                checklistContainer.innerHTML = `<p class="text-secondary">No subjects yet. Add one to get started!</p>`;
+                return;
+            }
+            const filteredChecklist = searchTerm ? filterChecklist(currentChecklist, searchTerm.toLowerCase()) : currentChecklist;
+            filteredChecklist.forEach((subject, subjectIndex) => {
+                const subjectEl = createChecklistItem(subject, [subjectIndex], 'subject', searchTerm);
+                checklistContainer.appendChild(subjectEl);
+            });
+        }
+
+        function createChecklistItem(item, indices, type, searchTerm) {
+            const itemEl = document.createElement('div');
+            itemEl.className = `checklist-item ${item.collapsed && !searchTerm ? 'collapsed' : ''}`;
+            itemEl.dataset.type = type;
+            itemEl.dataset.indices = indices.join(',');
+
+            const childrenContainer = type !== 'subtopic' ? `<div class="children-container"></div>` : '';
+            const checkboxHTML = `<input type="checkbox" class="item-checkbox mr-2" ${item.completed ? 'checked' : ''}>`;
+            
+            const progressBarHTML = type === 'subject' ? `
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill"></div>
+                </div>
+            ` : '';
+
+            itemEl.innerHTML = `
+                <div class="flex items-center justify-between p-2 rounded-md hover-bg-primary">
+                    <div class="flex items-center flex-grow min-w-0">
+                        ${type !== 'subtopic' ? `<span class="collapsible-icon mr-2 cursor-pointer text-secondary">▼</span>` : ''}
+                        ${checkboxHTML}
+                        <span class="item-title text-primary cursor-pointer truncate">${item.title}</span>
+                        <input type="text" class="item-edit-input hidden w-full bg-primary text-primary border-b border-theme" value="${item.title}">
+                    </div>
+                    <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                        <button class="notes-btn text-secondary hover-accent-primary text-lg">📝</button>
+                        ${type !== 'subtopic' ? `<button class="add-child-btn btn-theme-primary text-xs px-2 py-1 rounded">+</button>` : ''}
+                        <button class="delete-item-btn text-red-500 hover:text-red-400 text-lg">🗑️</button>
+                    </div>
+                </div>
+                ${progressBarHTML}
+                ${childrenContainer}
+            `;
+
+            const checkbox = itemEl.querySelector('.item-checkbox');
+            if (type !== 'subtopic' && !item.completed) {
+                const progress = calculateProgress(item);
+                if (progress.completed > 0 && progress.completed < progress.total) {
+                    checkbox.indeterminate = true;
+                }
+            }
+            
+            if (type === 'subject') {
+                const progress = calculateProgress(item);
+                const percentage = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
+                itemEl.querySelector('.progress-bar-fill').style.width = `${percentage}%`;
+            }
+
+            if (type !== 'subtopic' && (!item.collapsed || searchTerm) && item.children) {
+                const childrenEl = itemEl.querySelector('.children-container');
+                const childType = { subject: 'section', section: 'topic', topic: 'subtopic' }[type];
+                item.children.forEach((child, childIndex) => {
+                    childrenEl.appendChild(createChecklistItem(child, [...indices, childIndex], childType, searchTerm));
+                });
+            }
+            return itemEl;
+        }
+        
+        function updateStopwatchDisplay() {
+            if (!state || !state.stopwatch) return;
+            if (state.stopwatch.isRunning) {
+                const now = Date.now();
+                const totalElapsedTime = state.stopwatch.elapsedTime + (now - state.stopwatch.startTime);
+                stopwatchDisplay.textContent = formatTime(totalElapsedTime);
+            } else {
+                stopwatchDisplay.textContent = formatTime(state.stopwatch.elapsedTime);
+            }
+        }
+        
+        // --- UTILITY & HELPER FUNCTIONS ---
+        function getItemByIndices(indices) {
+            if (!state || !state.checklists || !state.checklists[state.currentTheme]) return null;
+            let items = state.checklists[state.currentTheme];
+            let item = null;
+            for (const index of indices) {
+                if (!items || !items[index]) return null;
+                item = items[index];
+                items = item.children;
+            }
+            return item;
+        }
+        function deleteItemByIndices(indices) {
+            let parent = { children: state.checklists[state.currentTheme] };
+            for (let i = 0; i < indices.length - 1; i++) parent = parent.children[indices[i]];
+            parent.children.splice(indices[indices.length - 1], 1);
+        }
+        function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
+        function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
+        
+        function setChildrenCompleted(item, isCompleted) {
+            item.completed = isCompleted;
+            if (item.children) {
+                item.children.forEach(child => setChildrenCompleted(child, isCompleted));
+            }
+        }
+
+        function calculateProgress(item) {
+            let stats = { total: 0, completed: 0 };
+            if (!item.children || item.children.length === 0) {
+                stats.total = 1;
+                stats.completed = item.completed ? 1 : 0;
+            } else {
+                item.children.forEach(child => {
+                    const childStats = calculateProgress(child);
+                    stats.total += childStats.total;
+                    stats.completed += childStats.completed;
+                });
+            }
+            return stats;
+        }
+        
+        function updateParentCompletion(indices) {
+            for (let i = indices.length - 1; i > 0; i--) {
+                const parentIndices = indices.slice(0, i);
+                const parent = getItemByIndices(parentIndices);
+                const progress = calculateProgress(parent);
+                parent.completed = progress.completed === progress.total;
+            }
+        }
+
+        // --- REWORKED: Gamification and Achievements ---
+        function updateAchievements(indices) {
+            const themeAchievements = state.achievements[state.currentTheme];
+            const oldMinorBadges = themeAchievements.minorBadges || 0;
+
+            let totalCompletedCount = 0;
+            function countCompleted(items) {
+                items.forEach(item => {
+                    if (item.completed) totalCompletedCount++;
+                    if (item.children) countCompleted(item.children);
+                });
+            }
+            countCompleted(state.checklists[state.currentTheme]);
+
+            const newMinorBadges = Math.floor(totalCompletedCount / 10);
+            if (newMinorBadges > oldMinorBadges) {
+                themeAchievements.minorBadges = newMinorBadges;
+                const badgeName = badgeInfo[state.currentTheme].minor.name;
+                showLevelUpModal(`You've earned ${badgeName} #${newMinorBadges}!`);
+            }
+
+            const subject = getItemByIndices([indices[0]]);
+            const progress = calculateProgress(subject);
+            if (progress.completed > 0 && progress.completed === progress.total && !subject.badgeAwarded) {
+                subject.badgeAwarded = true;
+                themeAchievements.grandBadges = (themeAchievements.grandBadges || 0) + 1;
+                const badgeName = badgeInfo[state.currentTheme].grand.name;
+                showLevelUpModal(`${badgeName} UNLOCKED!`, 'MAJOR ACHIEVEMENT!');
+            }
+            
+            updateBadgeUI();
+        }
+
+        function updateBadgeUI() {
+            const theme = state.currentTheme;
+            const themeAchievements = state.achievements[theme];
+            const minorBadges = themeAchievements.minorBadges || 0;
+            const grandBadges = themeAchievements.grandBadges || 0;
+
+            const minorBadgeDiv = document.getElementById('achievement-badge');
+            const grandBadgeDiv = document.getElementById('grand-badge');
+            
+            minorBadgeDiv.innerHTML = badgeInfo[theme].minor.icon(minorBadges);
+            grandBadgeDiv.innerHTML = badgeInfo[theme].grand.icon(grandBadges);
+            
+            document.getElementById('minor-badge-name').textContent = badgeInfo[theme].minor.name;
+            document.getElementById('grand-badge-name').textContent = badgeInfo[theme].grand.name;
+            document.getElementById('main-quote').textContent = `"${themeAchievements.mainQuote}"`;
+            
+            const themeColors = { classic: ['bg-blue-500', 'text-white'], 'wonder-woman': ['bg-yellow-500', 'text-blue-900'], 'iron-man': ['bg-cyan-400', 'text-gray-900'], batman: ['bg-yellow-400', 'text-black'] };
+            minorBadgeDiv.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
+            grandBadgeDiv.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
+            minorBadgeDiv.classList.add(...themeColors[theme]);
+            grandBadgeDiv.classList.add(...themeColors[theme]);
+        }
+        
+        function showLevelUpModal(message, title = "LEVEL UP!") {
+            document.getElementById('level-up-title').textContent = title;
+            document.getElementById('level-up-message').textContent = message;
+            openModal('level-up-modal');
+            document.getElementById('achievement-badge').classList.add('celebrate');
+            setTimeout(() => document.getElementById('achievement-badge').classList.remove('celebrate'), 800);
+        }
+
+        // --- Other functions (calendar, notes, etc.) ---
+        function openCalendarNoteModal(dateStr) {
+            currentCalendarDate = dateStr;
+            const bookmark = state.calendar.bookmarks[dateStr] || { note: '' };
+            document.getElementById('calendar-note-title').textContent = new Date(dateStr + 'T00:00:00').toDateString();
+            document.getElementById('calendar-note-input').value = bookmark.note;
+            openModal('calendar-note-modal');
+        }
+        function renderCalendar() {
+            if (!state || !state.calendar) return;
+            const calendarGrid = document.getElementById('calendar-grid');
+            const monthYearEl = document.getElementById('calendar-month-year');
+            calendarGrid.innerHTML = '';
+            const date = new Date(state.calendar.date);
+            monthYearEl.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+            ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
+                calendarGrid.innerHTML += `<div class="font-bold text-secondary">${d}</div>`;
+            });
+            const month = date.getMonth(), year = date.getFullYear();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayEl = document.createElement('div');
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                dayEl.textContent = i;
+                dayEl.dataset.date = dateStr;
+                dayEl.className = 'p-1 cursor-pointer rounded-full transition-all duration-200';
+                const today = new Date();
+                if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayEl.classList.add('bg-accent-primary', 'text-white');
+                }
+                if (state.calendar.bookmarks[dateStr]) {
+                    dayEl.style.border = '2px solid var(--accent-primary)';
+                    if(state.calendar.bookmarks[dateStr].note) dayEl.title = state.calendar.bookmarks[dateStr].note;
+                }
+                calendarGrid.appendChild(dayEl);
+            }
+        }
+        function openNotesModal(indices) {
+            currentEditingIndices = indices;
+            const item = getItemByIndices(indices);
+            if (!item) return;
+            if (!item.notes) item.notes = { text: '', attachments: [] };
+            document.getElementById('item-note-text').value = item.notes.text || '';
+            renderAttachments(item.notes.attachments);
+            openModal('notes-modal');
+        }
+        function saveNotes() {
+            if (!currentEditingIndices) return;
+            const item = getItemByIndices(currentEditingIndices);
+            if (!item) return;
+            item.notes.text = document.getElementById('item-note-text').value;
+            saveState();
+        }
+        function renderAttachments(attachments) {
+            const container = document.getElementById('attachments-container');
+            container.innerHTML = '';
+            if (!attachments || attachments.length === 0) {
+                container.innerHTML = `<p class="text-sm text-secondary">No attachments yet.</p>`;
+                return;
+            }
+            attachments.forEach((att, index) => {
+                const isYoutube = att.url.includes('youtube.com') || att.url.includes('youtu.be');
+                container.innerHTML += `
+                    <div class="flex items-center justify-between bg-primary p-2 rounded">
+                        <a href="${att.url}" target="_blank" class="truncate hover-accent-primary">${att.url}</a>
+                        <div>
+                            ${isYoutube ? `<button class="play-youtube-btn" data-url="${att.url}">▶️</button>` : ''}
+                            <button class="delete-attachment-btn" data-index="${index}">🗑️</button>
+                        </div>
+                    </div>`;
+            });
+        }
+        function processBulkAdd() {
+            const text = document.getElementById('bulk-add-input').value;
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            const currentChecklist = state.checklists[state.currentTheme];
+            let path = [];
+            lines.forEach(line => {
+                const indent = line.match(/^\s*/)[0].length / 2;
+                const content = line.trim();
+                const match = content.match(/^([^:]+):\s*(.*)$/);
+                if (!match) return;
+                const title = match[2].trim();
+                if (!title) return;
+                const newItem = { title, completed: false, children: [], collapsed: false, notes: { text: '', attachments: [] } };
+                path.length = indent;
+                if (indent === 0) {
+                    currentChecklist.push(newItem);
+                    path.push(currentChecklist[currentChecklist.length - 1]);
+                } else {
+                    let parent = path[indent - 1];
+                    if (parent) {
+                        if (!parent.children) parent.children = [];
+                        parent.children.push(newItem);
+                        path.push(parent.children[parent.children.length - 1]);
+                    }
                 }
             });
+            renderChecklist();
+            saveState();
+            closeModal('bulk-add-modal');
+        }
+        function filterChecklist(nodes, term) {
+            return nodes.map(node => ({...node})).filter(node => {
+                if (node.children) node.children = filterChecklist(node.children, term);
+                return node.title.toLowerCase().includes(term) || (node.children && node.children.length > 0);
+            });
+        }
+        let focusInterval;
+        function startFocusSession(minutes) {
+            const overlay = document.getElementById('focus-mode-overlay');
+            const timerDisplay = document.getElementById('focus-timer');
+            const themeBgColors = { classic: 'bg-blue-500', 'wonder-woman': 'bg-yellow-600', 'iron-man': 'bg-cyan-500', batman: 'bg-gray-900' };
+            overlay.className = `fixed inset-0 flex flex-col items-center justify-center z-50 ${themeBgColors[state.currentTheme]}`;
+            let totalSeconds = minutes * 60;
+            const updateTimer = () => {
+                const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const secs = String(totalSeconds % 60).padStart(2, '0');
+                timerDisplay.textContent = `${mins}:${secs}`;
+                if (totalSeconds-- <= 0) endFocusSession(true);
+            };
+            updateTimer();
+            focusInterval = setInterval(updateTimer, 1000);
+            document.getElementById('end-focus-session').onclick = () => endFocusSession(false);
+        }
+        function endFocusSession(isCompleted) {
+            clearInterval(focusInterval);
+            document.getElementById('focus-mode-overlay').classList.add('hidden');
+            if (isCompleted) new Audio('https://www.soundjay.com/buttons/sounds/button-1.mp3').play();
+        }
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
 
-            // Login/Logout button handlers
+        // --- EVENT LISTENERS ---
+        function initializeAppUI() {
+            if (appInitialized) return; // Prevent re-attaching listeners
+
             loginBtn.addEventListener('click', () => {
                 signInWithPopup(auth, provider).catch(error => {
                     console.error("Login failed:", error);
@@ -386,377 +757,13 @@
                 signOut(auth).catch(error => console.error("Logout failed:", error));
             });
             
-            // Save state to Firestore
-            async function saveState() {
-                if (!currentUser || !state) return;
-                try {
-                    const userDocRef = doc(db, "user_data", currentUser.uid);
-                    await setDoc(userDocRef, state); 
-                    const indicator = document.getElementById('save-indicator');
-                    indicator.classList.remove('opacity-0');
-                    setTimeout(() => indicator.classList.add('opacity-0'), 1500);
-                } catch (e) {
-                    console.error("Error saving state to Firestore:", e);
-                }
-            }
-
-            // --- RENDER FUNCTIONS ---
-            function renderFullUI() {
-                applyTheme(state.currentTheme, false);
-                updateStopwatchDisplay();
-            }
-
-            function applyTheme(theme, doSave = true) {
-                state.currentTheme = theme;
-                document.body.className = `theme-${theme} bg-primary text-primary`;
-                document.querySelectorAll('#theme-switcher .theme-btn').forEach(btn => {
-                    btn.style.borderColor = btn.dataset.theme === theme ? 'var(--accent-primary)' : 'transparent';
-                });
-                document.getElementById('main-title').textContent = state.mainTitle;
-                updateBadgeUI();
-                renderCalendar();
-                renderChecklist();
-                if (doSave) saveState();
-            }
-            
-            function renderChecklist(searchTerm = '') {
-                const currentChecklist = state.checklists[state.currentTheme] || [];
-                checklistContainer.innerHTML = '';
-                if (currentChecklist.length === 0 && !searchTerm) {
-                    checklistContainer.innerHTML = `<p class="text-secondary">No subjects yet. Add one to get started!</p>`;
-                    return;
-                }
-                const filteredChecklist = searchTerm ? filterChecklist(currentChecklist, searchTerm.toLowerCase()) : currentChecklist;
-                filteredChecklist.forEach((subject, subjectIndex) => {
-                    const subjectEl = createChecklistItem(subject, [subjectIndex], 'subject', searchTerm);
-                    checklistContainer.appendChild(subjectEl);
-                });
-            }
-
-            function createChecklistItem(item, indices, type, searchTerm) {
-                const itemEl = document.createElement('div');
-                itemEl.className = `checklist-item ${item.collapsed && !searchTerm ? 'collapsed' : ''}`;
-                itemEl.dataset.type = type;
-                itemEl.dataset.indices = indices.join(',');
-
-                const childrenContainer = type !== 'subtopic' ? `<div class="children-container"></div>` : '';
-                const checkboxHTML = `<input type="checkbox" class="item-checkbox mr-2" ${item.completed ? 'checked' : ''}>`;
-                
-                const progressBarHTML = type === 'subject' ? `
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill"></div>
-                    </div>
-                ` : '';
-
-                itemEl.innerHTML = `
-                    <div class="flex items-center justify-between p-2 rounded-md hover-bg-primary">
-                        <div class="flex items-center flex-grow min-w-0">
-                            ${type !== 'subtopic' ? `<span class="collapsible-icon mr-2 cursor-pointer text-secondary">▼</span>` : ''}
-                            ${checkboxHTML}
-                            <span class="item-title text-primary cursor-pointer truncate">${item.title}</span>
-                            <input type="text" class="item-edit-input hidden w-full bg-primary text-primary border-b border-theme" value="${item.title}">
-                        </div>
-                        <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
-                            <button class="notes-btn text-secondary hover-accent-primary text-lg">📝</button>
-                            ${type !== 'subtopic' ? `<button class="add-child-btn btn-theme-primary text-xs px-2 py-1 rounded">+</button>` : ''}
-                            <button class="delete-item-btn text-red-500 hover:text-red-400 text-lg">🗑️</button>
-                        </div>
-                    </div>
-                    ${progressBarHTML}
-                    ${childrenContainer}
-                `;
-
-                const checkbox = itemEl.querySelector('.item-checkbox');
-                if (type !== 'subtopic' && !item.completed) {
-                    const progress = calculateProgress(item);
-                    if (progress.completed > 0 && progress.completed < progress.total) {
-                        checkbox.indeterminate = true;
-                    }
-                }
-                
-                if (type === 'subject') {
-                    const progress = calculateProgress(item);
-                    const percentage = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
-                    itemEl.querySelector('.progress-bar-fill').style.width = `${percentage}%`;
-                }
-
-                if (type !== 'subtopic' && (!item.collapsed || searchTerm) && item.children) {
-                    const childrenEl = itemEl.querySelector('.children-container');
-                    const childType = { subject: 'section', section: 'topic', topic: 'subtopic' }[type];
-                    item.children.forEach((child, childIndex) => {
-                        childrenEl.appendChild(createChecklistItem(child, [...indices, childIndex], childType, searchTerm));
-                    });
-                }
-                return itemEl;
-            }
-            
-            function updateStopwatchDisplay() {
-                if (!state || !state.stopwatch) return;
-                if (state.stopwatch.isRunning) {
-                    const now = Date.now();
-                    const totalElapsedTime = state.stopwatch.elapsedTime + (now - state.stopwatch.startTime);
-                    stopwatchDisplay.textContent = formatTime(totalElapsedTime);
-                } else {
-                    stopwatchDisplay.textContent = formatTime(state.stopwatch.elapsedTime);
-                }
-            }
-            
-            // --- UTILITY & HELPER FUNCTIONS ---
-            function getItemByIndices(indices) {
-                if (!state || !state.checklists || !state.checklists[state.currentTheme]) return null;
-                let items = state.checklists[state.currentTheme];
-                let item = null;
-                for (const index of indices) {
-                    if (!items || !items[index]) return null;
-                    item = items[index];
-                    items = item.children;
-                }
-                return item;
-            }
-            function deleteItemByIndices(indices) {
-                let parent = { children: state.checklists[state.currentTheme] };
-                for (let i = 0; i < indices.length - 1; i++) parent = parent.children[indices[i]];
-                parent.children.splice(indices[indices.length - 1], 1);
-            }
-            function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
-            function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
-            
-            function setChildrenCompleted(item, isCompleted) {
-                item.completed = isCompleted;
-                if (item.children) {
-                    item.children.forEach(child => setChildrenCompleted(child, isCompleted));
-                }
-            }
-
-            function calculateProgress(item) {
-                let stats = { total: 0, completed: 0 };
-                if (!item.children || item.children.length === 0) {
-                    stats.total = 1;
-                    stats.completed = item.completed ? 1 : 0;
-                } else {
-                    item.children.forEach(child => {
-                        const childStats = calculateProgress(child);
-                        stats.total += childStats.total;
-                        stats.completed += childStats.completed;
-                    });
-                }
-                return stats;
-            }
-            
-            function updateParentCompletion(indices) {
-                for (let i = indices.length - 1; i > 0; i--) {
-                    const parentIndices = indices.slice(0, i);
-                    const parent = getItemByIndices(parentIndices);
-                    const progress = calculateProgress(parent);
-                    parent.completed = progress.completed === progress.total;
-                }
-            }
-
-            // --- REWORKED: Gamification and Achievements ---
-            function updateAchievements(indices) {
-                const themeAchievements = state.achievements[state.currentTheme];
-                const oldMinorBadges = themeAchievements.minorBadges || 0;
-
-                let totalCompletedCount = 0;
-                function countCompleted(items) {
-                    items.forEach(item => {
-                        if (item.completed) totalCompletedCount++;
-                        if (item.children) countCompleted(item.children);
-                    });
-                }
-                countCompleted(state.checklists[state.currentTheme]);
-
-                const newMinorBadges = Math.floor(totalCompletedCount / 10);
-                if (newMinorBadges > oldMinorBadges) {
-                    themeAchievements.minorBadges = newMinorBadges;
-                    const badgeName = badgeInfo[state.currentTheme].minor.name;
-                    showLevelUpModal(`You've earned ${badgeName} #${newMinorBadges}!`);
-                }
-
-                const subject = getItemByIndices([indices[0]]);
-                const progress = calculateProgress(subject);
-                if (progress.completed > 0 && progress.completed === progress.total && !subject.badgeAwarded) {
-                    subject.badgeAwarded = true;
-                    themeAchievements.grandBadges = (themeAchievements.grandBadges || 0) + 1;
-                    const badgeName = badgeInfo[state.currentTheme].grand.name;
-                    showLevelUpModal(`${badgeName} UNLOCKED!`, 'MAJOR ACHIEVEMENT!');
-                }
-                
-                updateBadgeUI();
-            }
-
-            function updateBadgeUI() {
-                const theme = state.currentTheme;
-                const themeAchievements = state.achievements[theme];
-                const minorBadges = themeAchievements.minorBadges || 0;
-                const grandBadges = themeAchievements.grandBadges || 0;
-
-                const minorBadgeDiv = document.getElementById('achievement-badge');
-                const grandBadgeDiv = document.getElementById('grand-badge');
-                
-                minorBadgeDiv.innerHTML = badgeInfo[theme].minor.icon(minorBadges);
-                grandBadgeDiv.innerHTML = badgeInfo[theme].grand.icon(grandBadges);
-                
-                document.getElementById('minor-badge-name').textContent = badgeInfo[theme].minor.name;
-                document.getElementById('grand-badge-name').textContent = badgeInfo[theme].grand.name;
-                document.getElementById('main-quote').textContent = `"${themeAchievements.mainQuote}"`;
-                
-                const themeColors = { classic: ['bg-blue-500', 'text-white'], 'wonder-woman': ['bg-yellow-500', 'text-blue-900'], 'iron-man': ['bg-cyan-400', 'text-gray-900'], batman: ['bg-yellow-400', 'text-black'] };
-                minorBadgeDiv.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
-                grandBadgeDiv.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl font-bold cursor-pointer mb-2 transition-transform duration-300 hover:scale-110';
-                minorBadgeDiv.classList.add(...themeColors[theme]);
-                grandBadgeDiv.classList.add(...themeColors[theme]);
-            }
-            
-            function showLevelUpModal(message, title = "LEVEL UP!") {
-                document.getElementById('level-up-title').textContent = title;
-                document.getElementById('level-up-message').textContent = message;
-                openModal('level-up-modal');
-                document.getElementById('achievement-badge').classList.add('celebrate');
-                setTimeout(() => document.getElementById('achievement-badge').classList.remove('celebrate'), 800);
-            }
-
-            // --- Other functions (calendar, notes, etc.) ---
-            function openCalendarNoteModal(dateStr) {
-                currentCalendarDate = dateStr;
-                const bookmark = state.calendar.bookmarks[dateStr] || { note: '' };
-                document.getElementById('calendar-note-title').textContent = new Date(dateStr + 'T00:00:00').toDateString();
-                document.getElementById('calendar-note-input').value = bookmark.note;
-                openModal('calendar-note-modal');
-            }
-            function renderCalendar() {
-                if (!state || !state.calendar) return;
-                const calendarGrid = document.getElementById('calendar-grid');
-                const monthYearEl = document.getElementById('calendar-month-year');
-                calendarGrid.innerHTML = '';
-                const date = new Date(state.calendar.date);
-                monthYearEl.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-                ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
-                    calendarGrid.innerHTML += `<div class="font-bold text-secondary">${d}</div>`;
-                });
-                const month = date.getMonth(), year = date.getFullYear();
-                const firstDay = new Date(year, month, 1).getDay();
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement('div'));
-                for (let i = 1; i <= daysInMonth; i++) {
-                    const dayEl = document.createElement('div');
-                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                    dayEl.textContent = i;
-                    dayEl.dataset.date = dateStr;
-                    dayEl.className = 'p-1 cursor-pointer rounded-full transition-all duration-200';
-                    const today = new Date();
-                    if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                        dayEl.classList.add('bg-accent-primary', 'text-white');
-                    }
-                    if (state.calendar.bookmarks[dateStr]) {
-                        dayEl.style.border = '2px solid var(--accent-primary)';
-                        if(state.calendar.bookmarks[dateStr].note) dayEl.title = state.calendar.bookmarks[dateStr].note;
-                    }
-                    calendarGrid.appendChild(dayEl);
-                }
-            }
-            function openNotesModal(indices) {
-                currentEditingIndices = indices;
-                const item = getItemByIndices(indices);
-                if (!item) return;
-                if (!item.notes) item.notes = { text: '', attachments: [] };
-                document.getElementById('item-note-text').value = item.notes.text || '';
-                renderAttachments(item.notes.attachments);
-                openModal('notes-modal');
-            }
-            function saveNotes() {
-                if (!currentEditingIndices) return;
-                const item = getItemByIndices(currentEditingIndices);
-                if (!item) return;
-                item.notes.text = document.getElementById('item-note-text').value;
-                saveState();
-            }
-            function renderAttachments(attachments) {
-                const container = document.getElementById('attachments-container');
-                container.innerHTML = '';
-                if (!attachments || attachments.length === 0) {
-                    container.innerHTML = `<p class="text-sm text-secondary">No attachments yet.</p>`;
-                    return;
-                }
-                attachments.forEach((att, index) => {
-                    const isYoutube = att.url.includes('youtube.com') || att.url.includes('youtu.be');
-                    container.innerHTML += `
-                        <div class="flex items-center justify-between bg-primary p-2 rounded">
-                            <a href="${att.url}" target="_blank" class="truncate hover-accent-primary">${att.url}</a>
-                            <div>
-                                ${isYoutube ? `<button class="play-youtube-btn" data-url="${att.url}">▶️</button>` : ''}
-                                <button class="delete-attachment-btn" data-index="${index}">🗑️</button>
-                            </div>
-                        </div>`;
-                });
-            }
-            function processBulkAdd() {
-                const text = document.getElementById('bulk-add-input').value;
-                const lines = text.split('\n').filter(line => line.trim() !== '');
-                const currentChecklist = state.checklists[state.currentTheme];
-                let path = [];
-                lines.forEach(line => {
-                    const indent = line.match(/^\s*/)[0].length / 2;
-                    const content = line.trim();
-                    const match = content.match(/^([^:]+):\s*(.*)$/);
-                    if (!match) return;
-                    const title = match[2].trim();
-                    if (!title) return;
-                    const newItem = { title, completed: false, children: [], collapsed: false, notes: { text: '', attachments: [] } };
-                    path.length = indent;
-                    if (indent === 0) {
-                        currentChecklist.push(newItem);
-                        path.push(currentChecklist[currentChecklist.length - 1]);
-                    } else {
-                        let parent = path[indent - 1];
-                        if (parent) {
-                            if (!parent.children) parent.children = [];
-                            parent.children.push(newItem);
-                            path.push(parent.children[parent.children.length - 1]);
-                        }
-                    }
-                });
-                renderChecklist();
-                saveState();
-                closeModal('bulk-add-modal');
-            }
-            function filterChecklist(nodes, term) {
-                return nodes.map(node => ({...node})).filter(node => {
-                    if (node.children) node.children = filterChecklist(node.children, term);
-                    return node.title.toLowerCase().includes(term) || (node.children && node.children.length > 0);
-                });
-            }
-            let focusInterval;
-            function startFocusSession(minutes) {
-                const overlay = document.getElementById('focus-mode-overlay');
-                const timerDisplay = document.getElementById('focus-timer');
-                const themeBgColors = { classic: 'bg-blue-500', 'wonder-woman': 'bg-yellow-600', 'iron-man': 'bg-cyan-500', batman: 'bg-gray-900' };
-                overlay.className = `fixed inset-0 flex flex-col items-center justify-center z-50 ${themeBgColors[state.currentTheme]}`;
-                let totalSeconds = minutes * 60;
-                const updateTimer = () => {
-                    const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-                    const secs = String(totalSeconds % 60).padStart(2, '0');
-                    timerDisplay.textContent = `${mins}:${secs}`;
-                    if (totalSeconds-- <= 0) endFocusSession(true);
-                };
-                updateTimer();
-                focusInterval = setInterval(updateTimer, 1000);
-                document.getElementById('end-focus-session').onclick = () => endFocusSession(false);
-            }
-            function endFocusSession(isCompleted) {
-                clearInterval(focusInterval);
-                document.getElementById('focus-mode-overlay').classList.add('hidden');
-                if (isCompleted) new Audio('https://www.soundjay.com/buttons/sounds/button-1.mp3').play();
-            }
-
-            // --- EVENT LISTENERS ---
             userNameSpan.addEventListener('blur', () => {
                 const newName = userNameSpan.textContent.trim();
                 if (newName && newName !== state.displayName) {
                     state.displayName = newName;
                     saveState();
                 } else {
-                    userNameSpan.textContent = state.displayName; // Revert if empty
+                    userNameSpan.textContent = state.displayName;
                 }
             });
 
@@ -928,7 +935,13 @@
             document.getElementById('calendar-grid').addEventListener('click', e => {
                 if (e.target.dataset.date) openCalendarNoteModal(e.target.dataset.date);
             });
-        });
+
+            appInitialized = true;
+        }
+
+        // Initialize the app once the DOM is ready
+        initializeAppUI();
+    });
     </script>
 </body>
 </html>
