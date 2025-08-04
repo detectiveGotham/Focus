@@ -233,7 +233,10 @@
 
         // --- AUTHENTICATION ---
         loginBtn.addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch(error => console.error("Authentication Error: ", error));
+            signInWithPopup(auth, provider).catch(error => {
+                console.error("Google Sign-In Error: ", error);
+                alert(`Could not sign in with Google. Error: ${error.message}`);
+            });
         });
 
         logoutBtn.addEventListener('click', () => {
@@ -242,11 +245,20 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                currentUser = user;
-                await loadUserData();
-                loginScreen.classList.add('hidden');
-                appScreen.classList.remove('hidden');
+                // User is signed in.
+                try {
+                    currentUser = user;
+                    await loadUserData();
+                    loginScreen.classList.add('hidden');
+                    appScreen.classList.remove('hidden');
+                } catch (error) {
+                    console.error("Critical Error: Failed to load user data after login.", error);
+                    alert("Could not load your data. This may be a Firestore security rule issue. Please check the console for details and ensure you have read/write access.");
+                    // Sign the user out to prevent an inconsistent state
+                    signOut(auth);
+                }
             } else {
+                // User is signed out.
                 currentUser = null;
                 userData = {};
                 loginScreen.classList.remove('hidden');
@@ -263,7 +275,8 @@
             if (docSnap.exists()) {
                 userData = docSnap.data();
             } else {
-                // Create new user data
+                // Create new user data document if it doesn't exist
+                console.log(`No existing data found for user ${currentUser.uid}. Creating new document.`);
                 userData = {
                     displayName: currentUser.displayName || 'New User',
                     theme: 'theme-classic',
@@ -273,6 +286,7 @@
                     calendarDate: ''
                 };
                 await setDoc(docRef, userData);
+                console.log("New user document created successfully.");
             }
             renderApp();
         }
@@ -507,6 +521,7 @@
         }
         
         function updateAllProgressBars() {
+            if (!userData.checklist) return;
             userData.checklist.forEach((subject, sIdx) => {
                 updateProgressBar(sIdx);
             });
@@ -544,16 +559,16 @@
             badgesContainer.innerHTML = `
                 <div class="text-center">
                     <span class="text-3xl">${themeConfig.badges.tier1.icon}</span>
-                    <p>${themeConfig.badges.tier1.name}: ${userData.badges.tier1}</p>
+                    <p>${themeConfig.badges.tier1.name}: ${userData.badges.tier1 || 0}</p>
                 </div>
                 <div class="text-center">
                     <span class="text-3xl">${themeConfig.badges.tier2.icon}</span>
-                    <p>${themeConfig.badges.tier2.name}: ${userData.badges.tier2}</p>
+                    <p>${themeConfig.badges.tier2.name}: ${userData.badges.tier2 || 0}</p>
                 </div>
             `;
             
             quotesList.innerHTML = '';
-            const unlockedQuotesCount = userData.badges.tier1;
+            const unlockedQuotesCount = userData.badges.tier1 || 0;
             for(let i = 0; i < unlockedQuotesCount && i < themeConfig.quotes.length; i++) {
                 const li = document.createElement('li');
                 li.textContent = themeConfig.quotes[i];
@@ -563,18 +578,20 @@
 
         function checkBadges() {
             // Tier 1 badge
-            const newTier1Badges = Math.floor(userData.completedTasks / 10);
-            if (newTier1Badges > userData.badges.tier1) {
+            const newTier1Badges = Math.floor((userData.completedTasks || 0) / 10);
+            if (newTier1Badges > (userData.badges.tier1 || 0)) {
                 userData.badges.tier1 = newTier1Badges;
                 alert(`New Badge Unlocked: ${themes[userData.theme].badges.tier1.name}! You also unlocked a new quote.`);
             }
 
             // Tier 2 badge
             let completedSubjects = 0;
-            userData.checklist.forEach(subject => {
-                if (subject.completed) completedSubjects++;
-            });
-            if (completedSubjects > userData.badges.tier2) {
+            if(userData.checklist) {
+                userData.checklist.forEach(subject => {
+                    if (subject.completed) completedSubjects++;
+                });
+            }
+            if (completedSubjects > (userData.badges.tier2 || 0)) {
                 userData.badges.tier2 = completedSubjects;
                 alert(`New Badge Unlocked: ${themes[userData.theme].badges.tier2.name}! You completed a whole subject!`);
             }
