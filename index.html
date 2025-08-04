@@ -45,14 +45,6 @@
             border-radius: var(--button-radius); padding: 0.5rem 1rem;
         }
         .btn-outline:hover { background-color: var(--primary-color); color: var(--main-bg); }
-        header .btn-outline {
-            color: var(--main-bg);
-            border-color: var(--main-bg);
-        }
-        header .btn-outline:hover {
-            background-color: var(--main-bg);
-            color: var(--primary-color);
-        }
 
         .checklist-item { border-left: 4px solid var(--primary-color); transition: all 0.2s ease-in-out; }
         .priority-flag { border-left-color: var(--danger-color) !important; background-color: oklab(from var(--danger-color) l a b / 20%);}
@@ -64,6 +56,7 @@
         .app-card { background-color: var(--card-bg); backdrop-filter: blur(4px); }
         .item-title:focus { outline: 1px dashed var(--accent-color); }
         
+        /* --- FIREBASE UI STYLES --- */
         #login-screen {
             display: flex;
             flex-direction: column;
@@ -263,7 +256,6 @@
                 renderCalendar();
                 renderChecklist();
                 renderAchievements();
-                stopwatchEl.textContent = formatTime(appState.stopwatch.elapsedTime);
             } catch (error) {
                 console.error("CRITICAL ERROR during renderAll:", error);
                 alert("A critical error occurred while displaying your data. Please check the console for details.");
@@ -439,87 +431,9 @@
         function openModal(modalElement) { modalBackdrop.classList.remove('hidden'); modalElement.classList.remove('hidden'); }
         function closeModal(modalElement) { modalBackdrop.classList.add('hidden'); modalElement.classList.add('hidden'); }
         
-        function openBookmarkModal(dateString) {
-            const modal = document.getElementById('bookmark-modal');
-            const bookmark = appState.calendar.bookmarks[dateString] || { note: '', color: '' };
-            const rootStyle = getComputedStyle(document.body);
-            const themeColors = [
-                rootStyle.getPropertyValue('--primary-color').trim(),
-                rootStyle.getPropertyValue('--secondary-color').trim(),
-                rootStyle.getPropertyValue('--accent-color').trim(),
-                rootStyle.getPropertyValue('--danger-color').trim()
-            ];
-            let colorsHTML = themeColors.map(color => 
-                `<button data-color="${color}" class="w-8 h-8 rounded-full" style="background-color: ${color}; border: ${bookmark.color === color ? '3px solid var(--text-color)' : '1px solid grey'}"></button>`
-            ).join('');
-
-            modal.innerHTML = `
-                <h3 class="font-bold text-lg mb-4">Bookmark for ${dateString}</h3>
-                <textarea id="bookmark-note-input" class="w-full p-2 border rounded mb-4 text-black" rows="3" placeholder="Add a note...">${bookmark.note || ''}</textarea>
-                <div class="flex justify-around mb-6">${colorsHTML}</div>
-                <div class="flex justify-end gap-2">
-                    <button id="delete-bookmark-btn" class="bg-red-500 text-white px-4 py-2" style="border-radius: var(--button-radius)">Delete</button>
-                    <button id="save-bookmark-btn" class="btn-theme px-4 py-2">Save</button>
-                </div>`;
-            openModal(modal);
-
-            const modalClickHandler = (e) => {
-                const target = e.target;
-                if (target.dataset.color) {
-                    modal.querySelectorAll('button[data-color]').forEach(b => b.style.border = '1px solid grey');
-                    target.style.border = '3px solid var(--text-color)';
-                } else if (target.id === 'save-bookmark-btn') {
-                    const note = modal.querySelector('#bookmark-note-input').value;
-                    const selectedColorEl = modal.querySelector('button[style*="var(--text-color)"]');
-                    const selectedColor = selectedColorEl ? selectedColorEl.dataset.color : null;
-                    if (note || selectedColor) {
-                        appState.calendar.bookmarks[dateString] = { note: note, color: selectedColor };
-                    } else {
-                        delete appState.calendar.bookmarks[dateString];
-                    }
-                    renderCalendar();
-                    debouncedSave();
-                    closeModal(modal);
-                    modal.removeEventListener('click', modalClickHandler);
-                } else if (target.id === 'delete-bookmark-btn') {
-                    delete appState.calendar.bookmarks[dateString];
-                    renderCalendar();
-                    debouncedSave();
-                    closeModal(modal);
-                    modal.removeEventListener('click', modalClickHandler);
-                }
-            };
-            modal.addEventListener('click', modalClickHandler);
-        }
-
-        function formatTime(ms) {
-            const s = Math.floor(ms / 1000);
-            return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-        }
-
         // --- Event Listeners Setup ---
         function addEventListeners() {
             
-            document.getElementById('theme-switcher').addEventListener('click', (e) => {
-                const theme = e.target.dataset.theme;
-                if (theme) {
-                    const isDefault = Object.values(appState.hubTitles).includes(appState.hubTitle);
-                    appState.currentTheme = theme;
-                    if (isDefault) {
-                        appState.hubTitle = appState.hubTitles[theme];
-                    }
-                    renderAll();
-                    debouncedSave();
-                }
-            });
-
-            mainTitleEl.addEventListener('blur', () => {
-                if(mainTitleEl.textContent !== appState.hubTitle) {
-                    appState.hubTitle = mainTitleEl.textContent;
-                    debouncedSave();
-                }
-            });
-
             document.getElementById('add-subject-btn').addEventListener('click', () => {
                 if (!appState.checklist) appState.checklist = [];
                 appState.checklist.push({ id: crypto.randomUUID(), title: 'New Subject', completed: false, collapsed: false, children: [] });
@@ -612,131 +526,6 @@
                     e.target.blur();
                 }
             });
-
-            calendarContainer.addEventListener('click', (e) => {
-                const target = e.target;
-                if (target.id === 'prev-month-btn') {
-                    appState.calendar.displayDate.setMonth(appState.calendar.displayDate.getMonth() - 1);
-                    renderCalendar();
-                    debouncedSave();
-                } else if (target.id === 'next-month-btn') {
-                    appState.calendar.displayDate.setMonth(appState.calendar.displayDate.getMonth() + 1);
-                    renderCalendar();
-                    debouncedSave();
-                } else if (target.dataset.date) {
-                    openBookmarkModal(target.dataset.date);
-                }
-            });
-
-            const startStopBtn = document.getElementById('start-stop-btn');
-            const resetBtn = document.getElementById('reset-btn');
-
-            startStopBtn.addEventListener('click', () => {
-                if (appState.stopwatch.intervalId) {
-                    clearInterval(appState.stopwatch.intervalId);
-                    appState.stopwatch.elapsedTime += Date.now() - appState.stopwatch.startTime;
-                    appState.stopwatch.intervalId = null;
-                    startStopBtn.textContent = 'Start';
-                } else {
-                    appState.stopwatch.startTime = Date.now();
-                    appState.stopwatch.intervalId = setInterval(() => {
-                        const totalElapsed = appState.stopwatch.elapsedTime + (Date.now() - appState.stopwatch.startTime);
-                        stopwatchEl.textContent = formatTime(totalElapsed);
-                    }, 1000);
-                    startStopBtn.textContent = 'Stop';
-                }
-                debouncedSave();
-            });
-
-            resetBtn.addEventListener('click', () => {
-                clearInterval(appState.stopwatch.intervalId);
-                appState.stopwatch = { startTime: 0, elapsedTime: 0, intervalId: null };
-                stopwatchEl.textContent = '00:00:00';
-                startStopBtn.textContent = 'Start';
-                debouncedSave();
-            });
-
-            logoutButton.addEventListener('click', () => {
-                signOut(auth);
-            });
-
-            achievementsContainer.addEventListener('click', () => {
-                const theme = appState.currentTheme;
-                const themeAchievements = appState.achievements[theme];
-                const badgeLevel = Math.floor(themeAchievements.tasksCompleted / 10);
-                const mainQuote = appState.mainQuotes[theme];
-                const availableQuotes = appState.quotes[theme];
-                
-                let quotesHTML = `<h4 class="font-bold border-b-2 pb-2" style="border-color: var(--border-color)">Main Quote</h4><p class="italic my-2">"${mainQuote}"</p>`;
-                quotesHTML += `<h4 class="font-bold border-b-2 pb-2 mt-4" style="border-color: var(--border-color)">Unlocked Quotes (Level ${badgeLevel})</h4>`;
-                
-                if (badgeLevel === 0) {
-                    quotesHTML += `<p class="mt-2" style="color: var(--secondary-color)">Complete 10 tasks in this theme to unlock the first quote!</p>`;
-                } else {
-                    for (let i = 0; i < availableQuotes.length; i++) {
-                        if (i < badgeLevel) {
-                            quotesHTML += `<p class="mt-2">"${availableQuotes[i]}"</p>`;
-                        } else {
-                            quotesHTML += `<p class="mt-2 opacity-50">"???" (Unlocks at Level ${i + 1})</p>`;
-                        }
-                    }
-                }
-
-                const modal = document.getElementById('quotes-modal');
-                modal.innerHTML = `
-                    <div class="overflow-y-auto pr-2">${quotesHTML}</div>
-                    <button id="close-quotes-modal" class="btn-theme mt-4 w-full py-2">Close</button>
-                `;
-                openModal(modal);
-                document.getElementById('close-quotes-modal').addEventListener('click', () => closeModal(modal), {once: true});
-            });
-
-            document.getElementById('bulk-add-btn').addEventListener('click', () => {
-                const modal = document.getElementById('bulk-add-modal');
-                modal.innerHTML = `
-                    <h3 class="font-bold text-lg mb-2">Bulk Add From Text</h3>
-                    <p class="text-sm mb-4" style="color: var(--secondary-color)">Indent with two spaces for hierarchy.</p>
-                    <textarea id="bulk-add-textarea" class="w-full h-64 p-2 border rounded mb-4 text-black" placeholder="Subject: New Project\n  Section: Initial Research\n    Topic: Competitor Analysis\n      Subtopic: Analyze Feature X"></textarea>
-                    <div class="flex justify-end gap-2">
-                        <button id="cancel-bulk-add" class="btn-outline">Cancel</button>
-                        <button id="process-bulk-add" class="btn-theme">Add to Checklist</button>
-                    </div>`;
-                openModal(modal);
-                document.getElementById('process-bulk-add').addEventListener('click', () => {
-                    const text = document.getElementById('bulk-add-textarea').value;
-                    const lines = text.split('\n').filter(line => line.trim() !== '');
-                    let pathStack = [];
-                    lines.forEach(line => {
-                        const indent = Math.floor(line.match(/^\s*/)[0].length / 2);
-                        let title = line.trim();
-                        title = title.replace(/^(Subject|Section|Topic|Subtopic):\s*/i, '');
-                        if (!title) return;
-                        const newItem = { id: crypto.randomUUID(), title, completed: false, collapsed: false };
-                        pathStack.length = indent;
-                        if (indent === 0) {
-                            newItem.children = [];
-                            appState.checklist.push(newItem);
-                            pathStack.push(appState.checklist[appState.checklist.length - 1]);
-                        } else {
-                            const parent = pathStack[indent - 1];
-                            if (parent) {
-                                if (!parent.children) parent.children = [];
-                                if (indent < 3) newItem.children = [];
-                                parent.children.push(newItem);
-                                pathStack.push(newItem);
-                            }
-                        }
-                    });
-                    renderChecklist();
-                    debouncedSave();
-                    closeModal(modal);
-                }, { once: true });
-                document.getElementById('cancel-bulk-add').addEventListener('click', () => closeModal(modal), { once: true });
-            });
-
-            document.getElementById('search-input').addEventListener('input', (e) => {
-                renderChecklist(e.target.value);
-            });
         }
 
         // --- AUTHENTICATION (The Core Controller) ---
@@ -744,17 +533,18 @@
             signInWithRedirect(auth, provider);
         });
 
-        // --- FIX: More robust login handling ---
+        logoutButton.addEventListener('click', () => {
+            signOut(auth);
+        });
+
         getRedirectResult(auth)
             .then((result) => {
                 if (result && result.user) {
                     console.log("Login successful with redirect result:", result.user);
-                    // The onAuthStateChanged listener will handle the rest.
                 }
             })
             .catch((error) => {
                 console.error("Error processing redirect result:", error);
-                alert(`Login failed: ${error.message}`);
             });
 
         onAuthStateChanged(auth, async (user) => {
