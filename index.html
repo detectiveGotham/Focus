@@ -745,7 +745,7 @@
         // --- EVENT LISTENERS ---
         function initializeAppUI() {
             if (appInitialized) return; // Prevent re-attaching listeners
-
+            
             loginBtn.addEventListener('click', () => {
                 signInWithPopup(auth, provider).catch(error => {
                     console.error("Login failed:", error);
