@@ -146,7 +146,7 @@
     <script type="module">
         // 1. Import Firebase Services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
 
         // 2. Your Firebase Configuration
@@ -741,9 +741,15 @@
 
         // --- AUTHENTICATION (The Core Controller) ---
         loginButton.addEventListener('click', () => {
-            // --- FIX for Browser Privacy ---
             signInWithRedirect(auth, provider);
         });
+
+        // --- FIX: More robust login handling ---
+        getRedirectResult(auth)
+            .catch((error) => {
+                console.error("Error processing redirect result:", error);
+                alert(`Login failed: ${error.message}`);
+            });
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
