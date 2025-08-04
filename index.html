@@ -427,10 +427,62 @@
         function openModal(modalElement) { modalBackdrop.classList.remove('hidden'); modalElement.classList.remove('hidden'); }
         function closeModal(modalElement) { modalBackdrop.classList.add('hidden'); modalElement.classList.add('hidden'); }
         
+        function openBookmarkModal(dateString) {
+            const modal = document.getElementById('bookmark-modal');
+            const bookmark = appState.calendar.bookmarks[dateString] || { note: '', color: '' };
+            const rootStyle = getComputedStyle(document.body);
+            const themeColors = [
+                rootStyle.getPropertyValue('--primary-color').trim(),
+                rootStyle.getPropertyValue('--secondary-color').trim(),
+                rootStyle.getPropertyValue('--accent-color').trim(),
+                rootStyle.getPropertyValue('--danger-color').trim()
+            ];
+            let colorsHTML = themeColors.map(color => 
+                `<button data-color="${color}" class="w-8 h-8 rounded-full" style="background-color: ${color}; border: ${bookmark.color === color ? '3px solid var(--text-color)' : '1px solid grey'}"></button>`
+            ).join('');
+
+            modal.innerHTML = `
+                <h3 class="font-bold text-lg mb-4">Bookmark for ${dateString}</h3>
+                <textarea id="bookmark-note-input" class="w-full p-2 border rounded mb-4 text-black" rows="3" placeholder="Add a note...">${bookmark.note}</textarea>
+                <div class="flex justify-around mb-6">${colorsHTML}</div>
+                <div class="flex justify-end gap-2">
+                    <button id="delete-bookmark-btn" class="bg-red-500 text-white px-4 py-2" style="border-radius: var(--button-radius)">Delete</button>
+                    <button id="save-bookmark-btn" class="btn-theme px-4 py-2">Save</button>
+                </div>`;
+            openModal(modal);
+
+            const modalClickHandler = (e) => {
+                const target = e.target;
+                if (target.dataset.color) {
+                    modal.querySelectorAll('button[data-color]').forEach(b => b.style.border = '1px solid grey');
+                    target.style.border = '3px solid var(--text-color)';
+                } else if (target.id === 'save-bookmark-btn') {
+                    const note = modal.querySelector('#bookmark-note-input').value;
+                    const selectedColorEl = modal.querySelector('button[style*="var(--text-color)"]');
+                    const selectedColor = selectedColorEl ? selectedColorEl.dataset.color : null;
+                    if (note || selectedColor) {
+                        appState.calendar.bookmarks[dateString] = { note: note, color: selectedColor };
+                    } else {
+                        delete appState.calendar.bookmarks[dateString];
+                    }
+                    renderCalendar();
+                    debouncedSave();
+                    closeModal(modal);
+                    modal.removeEventListener('click', modalClickHandler);
+                } else if (target.id === 'delete-bookmark-btn') {
+                    delete appState.calendar.bookmarks[dateString];
+                    renderCalendar();
+                    debouncedSave();
+                    closeModal(modal);
+                    modal.removeEventListener('click', modalClickHandler);
+                }
+            };
+            modal.addEventListener('click', modalClickHandler);
+        }
+
         // --- Event Listeners Setup ---
         function addEventListeners() {
             
-            // --- FIX: Theme Switcher Functionality ---
             document.getElementById('theme-switcher').addEventListener('click', (e) => {
                 const theme = e.target.dataset.theme;
                 if (theme) {
@@ -444,7 +496,6 @@
                 }
             });
 
-            // --- FIX: Main Title Editing ---
             mainTitleEl.addEventListener('blur', () => {
                 if(mainTitleEl.textContent !== appState.hubTitle) {
                     appState.hubTitle = mainTitleEl.textContent;
@@ -452,7 +503,6 @@
                 }
             });
 
-            // --- FIX: Checklist Functionality using Event Delegation ---
             document.getElementById('add-subject-btn').addEventListener('click', () => {
                 if (!appState.checklist) appState.checklist = [];
                 appState.checklist.push({ id: crypto.randomUUID(), title: 'New Subject', completed: false, collapsed: false, children: [] });
@@ -545,6 +595,27 @@
                     e.target.blur();
                 }
             });
+
+            // --- FIX: Calendar Functionality ---
+            calendarContainer.addEventListener('click', (e) => {
+                const target = e.target;
+                if (target.id === 'prev-month-btn') {
+                    appState.calendar.displayDate.setMonth(appState.calendar.displayDate.getMonth() - 1);
+                    renderCalendar();
+                    debouncedSave();
+                } else if (target.id === 'next-month-btn') {
+                    appState.calendar.displayDate.setMonth(appState.calendar.displayDate.getMonth() + 1);
+                    renderCalendar();
+                    debouncedSave();
+                } else if (target.dataset.date) {
+                    openBookmarkModal(target.dataset.date);
+                }
+            });
+
+            // --- FIX: Logout Button ---
+            logoutButton.addEventListener('click', () => {
+                signOut(auth);
+            });
         }
 
         // --- AUTHENTICATION (The Core Controller) ---
@@ -553,10 +624,6 @@
                 console.error("Authentication Error:", error);
                 alert(`Login Failed! Error: ${error.message}`);
             });
-        });
-
-        logoutButton.addEventListener('click', () => {
-            signOut(auth);
         });
 
         onAuthStateChanged(auth, async (user) => {
