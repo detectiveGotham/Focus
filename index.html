@@ -317,7 +317,6 @@
                 const bookmark = bookmarks[dateString];
                 if (bookmark) dayEl.style.border = `2px solid ${bookmark.color}`;
                 if (date.getTime() === today.getTime()) dayEl.classList.add('bg-theme-primary', 'text-white', 'font-bold');
-                // The event listener for this is now in addEventListeners
                 grid.appendChild(dayEl);
             }
         }
@@ -429,10 +428,31 @@
         function closeModal(modalElement) { modalBackdrop.classList.add('hidden'); modalElement.classList.add('hidden'); }
         
         // --- Event Listeners Setup ---
-        // This function "wires up" all the buttons after the app is rendered.
         function addEventListeners() {
             
-            // Checklist functionality
+            // --- FIX: Theme Switcher Functionality ---
+            document.getElementById('theme-switcher').addEventListener('click', (e) => {
+                const theme = e.target.dataset.theme;
+                if (theme) {
+                    const isDefault = Object.values(appState.hubTitles).includes(appState.hubTitle);
+                    appState.currentTheme = theme;
+                    if (isDefault) {
+                        appState.hubTitle = appState.hubTitles[theme];
+                    }
+                    renderAll();
+                    debouncedSave();
+                }
+            });
+
+            // --- FIX: Main Title Editing ---
+            mainTitleEl.addEventListener('blur', () => {
+                if(mainTitleEl.textContent !== appState.hubTitle) {
+                    appState.hubTitle = mainTitleEl.textContent;
+                    debouncedSave();
+                }
+            });
+
+            // --- FIX: Checklist Functionality using Event Delegation ---
             document.getElementById('add-subject-btn').addEventListener('click', () => {
                 if (!appState.checklist) appState.checklist = [];
                 appState.checklist.push({ id: crypto.randomUUID(), title: 'New Subject', completed: false, collapsed: false, children: [] });
@@ -469,7 +489,6 @@
                     } else if (button.classList.contains('priority-btn')) {
                         item.priority = !item.priority;
                     } else if (button.classList.contains('notes-btn')) {
-                        // openNotesModal(path); // This will be fixed in a future step
                         console.log("Notes button clicked - functionality to be added.");
                         needsRender = false;
                         needsSave = false;
@@ -526,8 +545,6 @@
                     e.target.blur();
                 }
             });
-
-            // NOTE: Other event listeners for calendar, themes, etc., will be added here in future steps.
         }
 
         // --- AUTHENTICATION (The Core Controller) ---
@@ -544,26 +561,18 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // User is signed in
                 currentUser = user;
                 console.log("onAuthStateChanged: User is logged in.", user);
                 userInfoEl.textContent = `Hi, ${user.displayName.split(' ')[0]}`;
-
-                // Load data and render the app
                 appState = await loadStateFromFirebase();
                 renderAll();
-                addEventListeners(); // <-- This is the crucial step to "wire up" the app
-
-                // Show the main app
+                addEventListeners();
                 appContainer.classList.remove('hidden');
                 loginScreen.style.display = 'none';
 
             } else {
-                // User is signed out
                 currentUser = null;
                 console.log("onAuthStateChanged: User is logged out.");
-                
-                // Reset state and show the login screen
                 appState = getDefaultState();
                 appContainer.classList.add('hidden');
                 loginScreen.style.display = 'flex';
