@@ -3,90 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Productivity Hub</title>
+    <title>Productivity Hub - UI Prototype</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Bangers&family=Cinzel:wght@700&family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Orbitron:wght@400;700&family=Cinzel:wght@700&family=VT323&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #3b82f6; --secondary-color: #1e40af; --background-color: #f3f4f6;
-            --text-color: #1f2937; --accent-color: #93c5fd; --font-family: 'Roboto', sans-serif;
-            --heatmap-1: #bee3f8; --heatmap-2: #63b3ed; --heatmap-3: #3182ce; --heatmap-4: #2c5282;
-            --bookmark-1: #fed7d7; --bookmark-2: #fefcbf; --bookmark-3: #c6f6d5; --bookmark-4: #c3dafe;
+        /* --- THEME DEFINITIONS --- */
+        body.theme-classic {
+            --main-bg: #f4f4f4; --text-color: #333333; --primary-color: #0D47A1; --secondary-color: #00796B;
+            --accent-color: #D84315; --border-color: #cccccc; --danger-color: #c62828; --main-font: 'VT323', monospace;
+            --button-radius: 0px; --special-bg: none; --card-bg: #ffffff;
         }
-        .theme-classic {
-            --primary-color: #4a5568; --secondary-color: #2d3748; --background-color: #f7fafc;
-            --text-color: #1a202c; --accent-color: #a0aec0; --font-family: 'Roboto', sans-serif;
-            --heatmap-1: #e2e8f0; --heatmap-2: #cbd5e0; --heatmap-3: #a0aec0; --heatmap-4: #718096;
-            --bookmark-1: #fed7d7; --bookmark-2: #fefcbf; --bookmark-3: #c6f6d5; --bookmark-4: #c3dafe;
+        body.theme-wonder-woman {
+            --main-bg: #002266; --text-color: #FFD700; --primary-color: #FFD700; --secondary-color: #C00000;
+            --accent-color: #FFD700; --border-color: #FFD700; --danger-color: #8B0000; --main-font: 'Cinzel', serif;
+            --button-radius: 4px; --special-bg: none; --card-bg: rgba(255, 255, 255, 0.05);
         }
-        .theme-wonder-woman {
-            --primary-color: #d90429; --secondary-color: #003049; --background-color: #fdfcdc;
-            --text-color: #001d3d; --accent-color: #f77f00; --font-family: 'Cinzel', serif;
-            --heatmap-1: #fca5a5; --heatmap-2: #f87171; --heatmap-3: #ef4444; --heatmap-4: #b91c1c;
-            --bookmark-1: #93c5fd; --bookmark-2: #fcd34d; --bookmark-3: #ffffff; --bookmark-4: #fdba74;
+        body.theme-iron-man {
+            --main-bg: #2E2E2E; --text-color: #00FFFF; --primary-color: #00FFFF; --secondary-color: #B22222;
+            --accent-color: #00FFFF; --border-color: #00FFFF; --danger-color: #800000; --main-font: 'Orbitron', sans-serif;
+            --button-radius: 2px; --special-bg: repeating-conic-gradient(from 0deg, #333 0% 25%, #2E2E2E 0% 50%) 50% 50% / 40px 40px;
+            --card-bg: rgba(0, 0, 0, 0.2);
         }
-        .theme-iron-man {
-            --primary-color: #aa0000; --secondary-color: #f2b705; --background-color: #260101;
-            --text-color: #f1f1f1; --accent-color: #d95d39; --font-family: 'Russo One', sans-serif;
-            --heatmap-1: #fca5a5; --heatmap-2: #ef4444; --heatmap-3: #b91c1c; --heatmap-4: #7f1d1d;
-            --bookmark-1: #60a5fa; --bookmark-2: #fde047; --bookmark-3: #d1d5db; --bookmark-4: #fbbf24;
+        body.theme-batman {
+            --main-bg: #121212; --text-color: #F5DE50; --primary-color: #F5DE50; --secondary-color: #708090;
+            --accent-color: #F5DE50; --border-color: #F5DE50; --danger-color: #444; --main-font: 'Roboto Condensed', sans-serif;
+            --button-radius: 0px; --special-bg: none; --card-bg: rgba(255, 255, 255, 0.05);
         }
-        .theme-batman {
-            --primary-color: #1a1a1a; --secondary-color: #f2b705; --background-color: #0d0d0d;
-            --text-color: #e5e5e5; --accent-color: #4d4d4d; --font-family: 'Bangers', cursive;
-            --heatmap-1: #6b7280; --heatmap-2: #4b5563; --heatmap-3: #374151; --heatmap-4: #1f2937;
-            --bookmark-1: #fde047; --bookmark-2: #a3a3a3; --bookmark-3: #e5e5e5; --bookmark-4: #525252;
+
+        /* --- GENERAL STYLES --- */
+        body {
+            background-color: var(--main-bg); background-image: var(--special-bg); color: var(--text-color);
+            font-family: var(--main-font); transition: background-color 0.5s;
         }
-        body { background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family); }
-        .header { background-color: var(--primary-color); color: var(--background-color); }
-        .btn-primary { background-color: var(--primary-color); color: var(--background-color); }
-        .btn-primary:hover { background-color: var(--secondary-color); }
-        .progress-bar-container { background-color: var(--accent-color); }
-        .progress-bar { background-color: var(--secondary-color); }
-        .checklist-item { border-left: 4px solid var(--primary-color); }
-        .priority-flagged { border-left: 4px solid var(--secondary-color) !important; background-color: var(--accent-color) !important; }
-        .tooltip { visibility: hidden; }
-        .has-tooltip:hover .tooltip { visibility: visible; }
+        .btn-theme {
+            background-color: var(--primary-color); color: var(--main-bg); border-radius: var(--button-radius);
+            transition: all 0.2s ease-in-out; border: 2px solid transparent; padding: 0.5rem 1rem;
+        }
+        .btn-theme:hover { filter: brightness(1.2); }
+        .btn-outline {
+            background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color);
+            border-radius: var(--button-radius); padding: 0.5rem 1rem;
+        }
+        .btn-outline:hover { background-color: var(--primary-color); color: var(--main-bg); }
+
+        .checklist-item { border-left: 4px solid var(--primary-color); transition: all 0.2s ease-in-out; }
+        .priority-flag { border-left-color: var(--danger-color) !important; background-color: oklab(from var(--danger-color) l a b / 20%);}
+        .modal-content { color: var(--text-color); background-color: var(--main-bg); border: 2px solid var(--border-color); }
+        .progress-bar-bg { background-color: var(--border-color); }
+        .progress-bar-fill { background-color: var(--secondary-color); transition: width 0.5s ease-in-out; }
+        #main-title { font-family: var(--main-font); }
+        #main-title:focus { outline: 2px solid var(--accent-color); background-color: rgba(255,255,255,0.1); }
+        .app-card { background-color: var(--card-bg); backdrop-filter: blur(4px); }
+        .item-title:focus { outline: 1px dashed var(--accent-color); }
+        
+        /* --- FIREBASE UI STYLES --- */
+        #login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
     </style>
 </head>
 <body class="theme-classic">
 
-    <!-- Login Screen -->
-    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-lg text-center"><h1 class="text-3xl font-bold mb-4 text-gray-800">Productivity Hub</h1><p class="text-gray-600 mb-6">Your personal space to get things done.</p><button id="login-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center mx-auto"><svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path d="M1 1h22v22H1z" fill="none"/></svg>Sign in with Google</button></div>
+    <div id="login-screen">
+        <button id="login-button" class="btn-theme text-2xl p-4">Login with Google</button>
     </div>
 
-    <!-- Main Application -->
-    <div id="app" class="hidden">
-        <header class="header p-4 flex justify-between items-center shadow-md">
-            <div><h1 class="text-2xl font-bold">Productivity Hub</h1><div class="flex items-center"><span id="user-name" class="text-lg cursor-pointer"></span><input id="user-name-input" type="text" class="hidden bg-transparent border-b-2 border-white ml-2 focus:outline-none"></div></div>
-            <div class="flex items-center space-x-4"><div class="relative"><button id="theme-switcher-btn" class="btn-primary py-2 px-4 rounded-lg">Change Theme</button><div id="theme-options" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20"><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-theme="theme-classic">Classic</a><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-theme="theme-wonder-woman">Wonder Woman</a><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-theme="theme-iron-man">Iron Man</a><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-theme="theme-batman">Batman</a></div></div><button id="logout-btn" class="btn-primary py-2 px-4 rounded-lg">Logout</button></div>
+    <div id="app-container" class="min-h-screen hidden">
+        <header class="p-4 flex justify-between items-center shadow-lg" style="background-color: var(--primary-color); color: var(--main-bg);">
+            <h1 id="main-title" class="text-3xl font-bold cursor-pointer px-2" contenteditable="true">Productivity Hub</h1>
+            <div class="flex items-center space-x-4">
+                <div id="user-info" class="text-sm"></div>
+                <div id="theme-switcher">
+                    <button data-theme="classic" class="w-6 h-6 rounded-full bg-blue-800 border-2 border-transparent focus:outline-none ring-offset-2 ring-offset-gray-800 focus:ring-2 focus:ring-white" title="Classic"></button>
+                    <button data-theme="wonder-woman" class="w-6 h-6 rounded-full bg-red-600 border-2 border-transparent focus:outline-none ring-offset-2 ring-offset-gray-800 focus:ring-2 focus:ring-white" title="Wonder Woman"></button>
+                    <button data-theme="iron-man" class="w-6 h-6 rounded-full bg-cyan-400 border-2 border-transparent focus:outline-none ring-offset-2 ring-offset-gray-800 focus:ring-2 focus:ring-white" title="Iron Man"></button>
+                    <button data-theme="batman" class="w-6 h-6 rounded-full bg-yellow-400 border-2 border-transparent focus:outline-none ring-offset-2 ring-offset-gray-800 focus:ring-2 focus:ring-white" title="Batman"></button>
+                </div>
+                <a href="focus.html" class="btn-theme flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bullseye" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 13A5 5 0 1 1 8 3a5 5 0 0 1 0 10zm0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"/><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M9.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
+                    Focus
+                </a>
+                <button id="logout-button" class="btn-outline">Logout</button>
+            </div>
         </header>
 
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-            <!-- Left Column: Tools -->
             <div class="lg:col-span-1 space-y-6">
-                <!-- Productivity Calendar -->
-                <div class="bg-white p-4 rounded-lg shadow"><h2 class="text-xl font-bold mb-2 text-gray-800">Productivity Calendar</h2><div id="calendar-container"></div></div>
-                <!-- Stopwatch -->
-                <div class="bg-white p-4 rounded-lg shadow"><h2 class="text-xl font-bold mb-2 text-gray-800">Stopwatch</h2><div id="stopwatch" class="text-4xl font-mono text-center text-gray-800 mb-4">00:00:00</div><div class="flex justify-center space-x-4"><button id="start-stop-btn" class="btn-primary px-4 py-2 rounded-lg">Start</button><button id="reset-btn" class="btn-primary px-4 py-2 rounded-lg">Reset</button></div></div>
-                <!-- Focus Mode -->
-                <div class="bg-white p-4 rounded-lg shadow"><h2 class="text-xl font-bold mb-2 text-gray-800">Focus Mode</h2><a href="focus.html" class="block w-full text-center btn-primary py-2 px-4 rounded-lg">Enter Focus Zone</a></div>
-                <!-- Gamification -->
-                <div class="bg-white p-4 rounded-lg shadow"><h2 class="text-xl font-bold mb-2 text-gray-800">Rewards</h2><div id="badges-container" class="flex justify-around mb-4"></div><div id="quotes-container"><h3 class="font-semibold text-gray-700">Unlocked Quotes:</h3><ul id="quotes-list" class="list-disc list-inside text-gray-600"></ul></div></div>
+                <div class="app-card p-4 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-2">Achievements</h2>
+                    <div id="achievements-container" class="text-center"></div>
+                </div>
+                <div class="app-card p-4 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-2">Productivity Calendar</h2>
+                    <div id="calendar-container"></div>
+                </div>
+                <div class="app-card p-4 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-2">Stopwatch</h2>
+                    <div id="stopwatch" class="text-6xl font-mono text-center text-theme-primary mb-2">00:00:00</div>
+                    <div class="flex justify-center space-x-4">
+                        <button id="start-stop-btn" class="btn-theme w-24">Start</button>
+                        <button id="reset-btn" class="btn-theme">Reset</button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Right Column: Checklist -->
-            <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow">
-                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                    <h2 class="text-xl font-bold text-gray-800">My Checklist</h2>
+            <div class="lg:col-span-2 app-card p-4 rounded-lg shadow-md">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                    <h2 class="text-3xl font-bold">My Checklist</h2>
                     <div class="flex items-center gap-2">
-                        <input type="text" id="search-input" placeholder="Search tasks..." class="p-2 border rounded-lg text-gray-800"><button id="search-btn" class="btn-primary px-4 py-2 rounded-lg">Search</button>
+                        <input type="text" id="search-input" placeholder="Search tasks..." class="p-2 border rounded-lg w-full md:w-auto text-black">
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button id="bulk-add-btn" class="btn-primary px-4 py-2 rounded-lg">Bulk Add</button>
-                        <button id="add-subject-btn" class="btn-primary px-4 py-2 rounded-lg">Add Subject</button>
-                    </div>
+                </div>
+                <div class="flex flex-wrap justify-end items-center mb-4 gap-2">
+                    <button id="bulk-add-btn" class="btn-theme">Bulk Add</button>
+                    <button id="add-subject-btn" class="btn-theme">Add Subject</button>
                 </div>
                 <div id="checklist-container" class="space-y-4"></div>
             </div>
@@ -94,23 +127,25 @@
     </div>
 
     <!-- Modals -->
-    <div id="modal-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30"></div>
-    <!-- Bookmark Modal -->
-    <div id="bookmark-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-40 w-96 text-gray-800"></div>
-    <!-- Notes Modal -->
-    <div id="notes-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-40 w-11/12 max-w-2xl text-gray-800"></div>
-    <!-- YouTube Modal -->
-    <div id="youtube-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black p-2 rounded-lg shadow-lg z-50"></div>
-    <!-- Bulk Add Modal -->
-    <div id="bulk-add-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-40 w-11/12 max-w-2xl text-gray-800"></div>
+    <div id="modal-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-60 z-40"></div>
+    <div id="bookmark-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-lg shadow-2xl z-50 w-11/12 max-w-md modal-content"></div>
+    <div id="notes-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-lg shadow-2xl z-50 w-11/12 max-w-2xl modal-content flex flex-col max-h-[80vh]"></div>
+    <div id="youtube-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black p-2 rounded-lg shadow-2xl z-50 w-11/12 max-w-4xl"></div>
+    <div id="bulk-add-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-lg shadow-2xl z-50 w-11/12 max-w-2xl modal-content"></div>
+    <div id="quotes-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-lg shadow-2xl z-50 w-11/12 max-w-2xl modal-content flex flex-col max-h-[80vh]"></div>
 
+    <script>
+        // This script tag is intentionally left empty. 
+        // The main application logic, including Firebase, is in the module script below.
+    </script>
+    
     <script type="module">
-        // Firebase SDKs
+        // 1. Import Firebase Services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
 
-        // Firebase Configuration
+        // 2. Your Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAupZMTnCqwyz7WEGcA8pJS1r0nnYA6bMk",
             authDomain: "checkmeout-b57f2.firebaseapp.com",
@@ -121,473 +156,721 @@
             measurementId: "G-S6T4G00G7F"
         };
 
-        // Initialize Firebase
+        // 3. Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
         let currentUser = null;
-        let userData = {};
-        let currentCalendarDate = new Date();
 
-        // UI Elements
-        const loginScreen = document.getElementById('login-screen');
-        const appScreen = document.getElementById('app');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const userNameEl = document.getElementById('user-name');
-        const userNameInput = document.getElementById('user-name-input');
-        const checklistContainer = document.getElementById('checklist-container');
-        const addSubjectBtn = document.getElementById('add-subject-btn');
-        const themeSwitcherBtn = document.getElementById('theme-switcher-btn');
-        const themeOptions = document.getElementById('theme-options');
-        const calendarContainer = document.getElementById('calendar-container');
-        const searchInput = document.getElementById('search-input');
-        const searchBtn = document.getElementById('search-btn');
-        const bulkAddBtn = document.getElementById('bulk-add-btn');
-
-        // Themed Content
-        const themes = {
-            'theme-classic': {
-                badges: { tier1: { name: 'Milestone', icon: '🏆' }, tier2: { name: 'Completionist', icon: '🏅' } },
-                quotes: ["The secret of getting ahead is getting started.", "It does not matter how slowly you go as long as you do not stop.", "The future depends on what you do today."],
-                bookmarkColors: {'#fed7d7':'Red', '#fefcbf':'Yellow', '#c6f6d5':'Green', '#c3dafe':'Blue'}
-            },
-            'theme-wonder-woman': {
-                badges: { tier1: { name: 'Lasso of Truth', icon: '✨' }, tier2: { name: 'Amazonian Strength', icon: '🛡️' } },
-                quotes: ["You are stronger than you believe.", "What one does when faced with the truth is more difficult than you'd think.", "Go in peace. I will not harm you."],
-                bookmarkColors: {'#93c5fd':'Blue', '#fcd34d':'Gold', '#ffffff':'White', '#fdba74':'Orange'}
-            },
-            'theme-iron-man': {
-                badges: { tier1: { name: 'Arc Reactor', icon: '💡' }, tier2: { name: 'Proof of Heart', icon: '❤️' } },
-                quotes: ["I am Iron Man.", "Sometimes you gotta run before you can walk.", "An intelligent man once asked me if I knew what the square root of 841 was. I said 29."],
-                bookmarkColors: {'#60a5fa':'Blue', '#fde047':'Gold', '#d1d5db':'Silver', '#fbbf24':'Orange'}
-            },
-            'theme-batman': {
-                badges: { tier1: { name: 'Batarang', icon: '🦇' }, tier2: { name: 'Gotham\'s Guardian', icon: '🌃' } },
-                quotes: ["It's not who I am underneath, but what I do that defines me.", "Why do we fall? So we can learn to pick ourselves up.", "I'm Batman."],
-                bookmarkColors: {'#fde047':'Yellow', '#a3a3a3':'Grey', '#e5e5e5':'White', '#525252':'Dark Grey'}
-            }
-        };
-
-        // --- AUTHENTICATION & DATA ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    currentUser = user;
-                    await loadUserData();
-                    loginScreen.classList.add('hidden');
-                    appScreen.classList.remove('hidden');
-                } catch (error) {
-                    console.error("Critical Error: Failed to load user data after login.", error);
-                    alert("Could not load your data. This may be a Firestore security rule issue.");
-                    signOut(auth);
-                }
-            } else {
-                currentUser = null; userData = {};
-                loginScreen.classList.remove('hidden');
-                appScreen.classList.add('hidden');
-            }
-        });
-
-        async function loadUserData() {
-            if (!currentUser) return;
-            const docRef = doc(db, "user_data", currentUser.uid);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                userData = docSnap.data();
-            } else {
-                userData = {
-                    displayName: currentUser.displayName || 'New User', theme: 'theme-classic', checklist: [],
-                    badges: { tier1: 0, tier2: 0 }, completedTasks: 0, completionDates: {}, calendarBookmarks: {}
-                };
-                await setDoc(docRef, userData);
-            }
-            // Ensure data structure is up to date
-            userData.completionDates = userData.completionDates || {};
-            userData.calendarBookmarks = userData.calendarBookmarks || {};
-            renderApp();
-        }
-
-        async function saveUserData() {
-            if (!currentUser) return;
-            const docRef = doc(db, "user_data", currentUser.uid);
-            await setDoc(docRef, userData, { merge: true });
-        }
-        
-        loginBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(err => console.error("Auth Error", err)));
-        logoutBtn.addEventListener('click', () => signOut(auth));
-
-        // --- APP RENDERING ---
-        function renderApp() {
-            document.body.className = userData.theme || 'theme-classic';
-            userNameEl.textContent = userData.displayName;
-            renderCalendar();
-            renderChecklist();
-            renderGamification();
-        }
-
-        // --- CALENDAR ---
-        function renderCalendar() {
-            // Calendar logic will be extensive.
-        }
-        // Placeholder for the new calendar logic
-        function renderCalendar() {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-
-            let calendarHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <button id="prev-month-btn" class="font-bold text-lg">‹</button>
-                    <h3 class="font-bold">${currentCalendarDate.toLocaleString('default', { month: 'long' })} ${year}</h3>
-                    <button id="next-month-btn" class="font-bold text-lg">›</button>
-                </div>
-                <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                </div>
-                <div id="calendar-grid" class="grid grid-cols-7 gap-1 mt-2"></div>
-            `;
-            calendarContainer.innerHTML = calendarHTML;
-            
-            const grid = document.getElementById('calendar-grid');
-            const firstDayOfMonth = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            // Add blank days for the start of the month
-            for (let i = 0; i < firstDayOfMonth; i++) {
-                grid.innerHTML += `<div></div>`;
-            }
-
-            // Add days of the month
-            for (let i = 1; i <= daysInMonth; i++) {
-                const date = new Date(year, month, i);
-                const dateString = date.toISOString().split('T')[0];
-                const dayEl = document.createElement('div');
-                dayEl.textContent = i;
-                dayEl.className = `relative p-2 rounded cursor-pointer text-center has-tooltip`;
-                
-                // Today's highlight
-                if (date.getTime() === today.getTime()) {
-                    dayEl.classList.add('bg-blue-500', 'text-white', 'font-bold');
-                }
-                
-                // Heatmap
-                const completedCount = userData.completionDates[dateString] || 0;
-                if (completedCount > 0) {
-                    let heatmapClass = '1';
-                    if (completedCount >= 10) heatmapClass = '4';
-                    else if (completedCount >= 8) heatmapClass = '3';
-                    else if (completedCount >= 4) heatmapClass = '2';
-                    dayEl.style.backgroundColor = `var(--heatmap-${heatmapClass})`;
-                }
-
-                // Bookmarks
-                const bookmark = userData.calendarBookmarks[dateString];
-                if (bookmark) {
-                    dayEl.style.border = `2px solid ${bookmark.color}`;
-                    dayEl.innerHTML += `<div class="tooltip absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 w-max">${bookmark.note}</div>`;
-                }
-
-                dayEl.addEventListener('click', () => openBookmarkModal(dateString));
-                grid.appendChild(dayEl);
-            }
-            
-            document.getElementById('prev-month-btn').addEventListener('click', () => {
-                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-                renderCalendar();
-            });
-            document.getElementById('next-month-btn').addEventListener('click', () => {
-                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-                renderCalendar();
-            });
-        }
-        
-        // --- MODALS ---
-        const modalBackdrop = document.getElementById('modal-backdrop');
-        function openModal(modal) { modalBackdrop.classList.remove('hidden'); modal.classList.remove('hidden'); }
-        function closeModal(modal) { modalBackdrop.classList.add('hidden'); modal.classList.add('hidden'); }
-        modalBackdrop.addEventListener('click', () => {
-            document.querySelectorAll('.fixed.z-40, .fixed.z-50').forEach(m => m.classList.add('hidden'));
-            modalBackdrop.classList.add('hidden');
-        });
-
-        function openBookmarkModal(dateString) {
-            const modal = document.getElementById('bookmark-modal');
-            const bookmark = userData.calendarBookmarks[dateString] || { note: '', color: '' };
-            const themeColors = themes[userData.theme].bookmarkColors;
-            
-            let colorsHTML = '';
-            for (const color in themeColors) {
-                colorsHTML += `<button data-color="${color}" class="w-8 h-8 rounded-full" style="background-color: ${color}; border: ${bookmark.color === color ? '2px solid black' : '1px solid grey'}"></button>`;
-            }
-
-            modal.innerHTML = `
-                <h3 class="font-bold text-lg mb-2">Bookmark for ${dateString}</h3>
-                <textarea id="bookmark-note" class="w-full p-2 border rounded mb-2">${bookmark.note}</textarea>
-                <div class="flex justify-around mb-4">${colorsHTML}</div>
-                <div class="flex justify-end gap-2">
-                    <button id="delete-bookmark" class="bg-red-500 text-white px-4 py-2 rounded">Delete</button>
-                    <button id="save-bookmark" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
-                </div>`;
-            
-            openModal(modal);
-
-            modal.querySelector('#save-bookmark').addEventListener('click', () => {
-                const note = modal.querySelector('#bookmark-note').value;
-                const selectedColor = modal.querySelector('button[data-color][style*="black"]')?.dataset.color;
-                if (note && selectedColor) {
-                    userData.calendarBookmarks[dateString] = { note, color: selectedColor };
-                } else {
-                    delete userData.calendarBookmarks[dateString];
-                }
-                saveUserData().then(() => {
-                    renderCalendar();
-                    closeModal(modal);
-                });
-            });
-            modal.querySelector('#delete-bookmark').addEventListener('click', () => {
-                delete userData.calendarBookmarks[dateString];
-                saveUserData().then(() => {
-                    renderCalendar();
-                    closeModal(modal);
-                });
-            });
-            modal.querySelectorAll('button[data-color]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    modal.querySelectorAll('button[data-color]').forEach(b => b.style.border = '1px solid grey');
-                    btn.style.border = '2px solid black';
-                });
-            });
-        }
-        
-        // --- GLOBAL SEARCH ---
-        function filterChecklist(term) {
-            if (!term) {
-                renderChecklist(userData.checklist);
+        // --- Core Firebase Functions ---
+        async function saveStateToFirebase(state) {
+            if (!currentUser) {
+                console.log("Not logged in. State not saved.");
                 return;
             }
-            const lowerTerm = term.toLowerCase();
-            const filtered = [];
-
-            function search(items) {
-                const results = [];
-                for (const item of items) {
-                    let match = item.name.toLowerCase().includes(lowerTerm);
-                    let childrenResults = [];
-                    if (item.children) {
-                        childrenResults = search(item.children);
-                    }
-                    if (match || childrenResults.length > 0) {
-                        results.push({ ...item, children: childrenResults, collapsed: false });
-                    }
-                }
-                return results;
+            try {
+                const docRef = doc(db, "users", currentUser.uid);
+                // We need to convert the state to a plain object for Firestore
+                const plainState = JSON.parse(JSON.stringify(state));
+                await setDoc(docRef, plainState);
+                console.log("State saved to Firebase.");
+            } catch (error) {
+                console.error("Error saving state to Firebase: ", error);
             }
-            renderChecklist(search(userData.checklist));
-        }
-        searchBtn.addEventListener('click', () => filterChecklist(searchInput.value));
-        searchInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') filterChecklist(searchInput.value) });
-
-        // --- CHECKLIST LOGIC (MODIFIED) ---
-        function renderChecklist(data = userData.checklist) {
-            checklistContainer.innerHTML = '';
-            if (!data) return;
-            data.forEach((subject, sIdx) => {
-                checklistContainer.appendChild(createChecklistItem(subject, [sIdx]));
-            });
-            updateAllProgressBars();
         }
 
-        function createChecklistItem(item, path) {
-            const div = document.createElement('div');
-            div.className = `checklist-item p-2 rounded-lg bg-gray-50 ml-4 ${item.priority ? 'priority-flagged' : ''}`;
-            if(path.length > 1) div.style.marginLeft = `${path.length * 1.5}rem`;
+        async function loadStateFromFirebase() {
+            if (!currentUser) return null;
+            const docRef = doc(db, "users", currentUser.uid);
+            const docSnap = await getDoc(docRef);
 
-            const itemHeader = document.createElement('div');
-            itemHeader.className = 'flex items-center justify-between';
-            
-            const leftSide = document.createElement('div');
-            leftSide.className = 'flex items-center';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = item.completed;
-            checkbox.className = 'mr-2 h-5 w-5 flex-shrink-0';
-            checkbox.addEventListener('change', () => toggleItemCompletion(path, checkbox.checked));
-
-            const title = document.createElement('span');
-            title.textContent = item.name;
-            title.className = 'font-semibold cursor-pointer';
-            title.addEventListener('click', () => { /* edit logic */ });
-
-            const collapseIcon = document.createElement('span');
-            collapseIcon.textContent = item.collapsed ? '▶️' : '🔽';
-            collapseIcon.className = 'cursor-pointer mr-2';
-            collapseIcon.addEventListener('click', () => { /* collapse logic */ });
-
-            leftSide.appendChild(collapseIcon);
-            leftSide.appendChild(checkbox);
-            leftSide.appendChild(title);
-            
-            const rightSide = document.createElement('div');
-            rightSide.className = 'space-x-2 flex-shrink-0';
-            
-            // Add Priority Flag button for subtasks only
-            if (path.length === 4) {
-                 const priorityBtn = document.createElement('button');
-                 priorityBtn.textContent = '🚩';
-                 priorityBtn.title = 'Toggle Priority';
-                 priorityBtn.className = `w-6 h-6 rounded-full ${item.priority ? 'bg-yellow-400' : 'bg-gray-300'}`;
-                 priorityBtn.addEventListener('click', () => togglePriority(path));
-                 rightSide.appendChild(priorityBtn);
-            }
-            
-            // Notes button for all items
-            const notesBtn = document.createElement('button');
-            notesBtn.textContent = '📝';
-            notesBtn.title = 'Notes & Attachments';
-            notesBtn.className = 'w-6 h-6 rounded-full bg-gray-300';
-            notesBtn.addEventListener('click', () => openNotesModal(path));
-            rightSide.appendChild(notesBtn);
-
-
-            if (path.length < 4) { /* Add button */ }
-            /* Delete button */
-            
-            itemHeader.appendChild(leftSide);
-            itemHeader.appendChild(rightSide);
-            div.appendChild(itemHeader);
-
-            if (path.length === 1) { /* Progress Bar */ }
-            if (!item.collapsed && item.children) { /* Children */ }
-            
-            return div;
-        }
-
-        function toggleItemCompletion(path, isCompleted) {
-            const item = getItemByPath(path);
-            let tasksChanged = 0;
-            let dateString = new Date().toISOString().split('T')[0];
-
-            function setCompletion(currentItem, completed, currentPath) {
-                if(currentItem.completed !== completed) {
-                    currentItem.completed = completed;
-                    tasksChanged += completed ? 1 : -1;
-                    // Only track subtasks for heatmap
-                    if (currentPath.length === 4) {
-                        userData.completionDates[dateString] = (userData.completionDates[dateString] || 0) + (completed ? 1 : -1);
-                        if(userData.completionDates[dateString] <= 0) delete userData.completionDates[dateString];
-                    }
+            if (docSnap.exists()) {
+                console.log("Loaded state from Firebase.");
+                const loadedData = docSnap.data();
+                // Firestore doesn't store Date objects, so we need to convert the string back
+                if(loadedData.calendar && loadedData.calendar.displayDate) {
+                    loadedData.calendar.displayDate = new Date(loadedData.calendar.displayDate);
                 }
-                if (currentItem.children) {
-                    currentItem.children.forEach((child, idx) => setCompletion(child, completed, [...currentPath, idx]));
-                }
+                return loadedData;
+            } else {
+                console.log("No existing data. Creating new document for user.");
+                return null; 
             }
-            
-            setCompletion(item, isCompleted, path);
-            
-            if(path.length > 1) updateParentStatus(path.slice(0, -1));
-            
-            userData.completedTasks = (userData.completedTasks || 0) + tasksChanged;
-            checkBadges();
-            saveUserData().then(() => {
-                renderChecklist();
-                renderCalendar();
-            });
         }
         
-        function togglePriority(path) {
-            const item = getItemByPath(path);
-            item.priority = !item.priority;
-            saveUserData().then(renderChecklist);
-        }
+        // --- App Code ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- UI Elements ---
+            const loginScreen = document.getElementById('login-screen');
+            const appContainer = document.getElementById('app-container');
+            const loginButton = document.getElementById('login-button');
+            const logoutButton = document.getElementById('logout-button');
+            const userInfoEl = document.getElementById('user-info');
 
-        function openNotesModal(path) {
-            alert("Notes & Attachments feature is under construction!");
-        }
-
-        // --- BULK ADD ---
-        bulkAddBtn.addEventListener('click', openBulkAddModal);
-
-        function openBulkAddModal() {
-            const modal = document.getElementById('bulk-add-modal');
-            modal.innerHTML = `
-                <h3 class="font-bold text-lg mb-2">Bulk Add From Text</h3>
-                <p class="text-sm mb-2">Paste text with structure like "Subject: Name", "Section: Name", etc. Each on a new line.</p>
-                <textarea id="bulk-add-textarea" class="w-full h-64 p-2 border rounded mb-2"></textarea>
-                <div class="flex justify-end gap-2">
-                    <button id="process-bulk-add" class="bg-blue-500 text-white px-4 py-2 rounded">Process</button>
-                </div>`;
-            openModal(modal);
-            
-            modal.querySelector('#process-bulk-add').addEventListener('click', () => {
-                const text = modal.querySelector('#bulk-add-textarea').value;
-                processBulkAdd(text);
-                closeModal(modal);
+            // --- Default State ---
+            const getDefaultState = () => ({
+                hubTitle: 'Productivity Hub', currentTheme: 'classic',
+                hubTitles: {
+                    classic: 'Productivity Hub',
+                    'wonder-woman': 'Themysciran Scrolls',
+                    'iron-man': 'Stark Industries R&D',
+                    batman: 'Gotham Case Files'
+                },
+                calendar: { displayDate: new Date(), bookmarks: {}, completionHeatmap: {} },
+                checklist: [],
+                stopwatch: { startTime: 0, elapsedTime: 0, intervalId: null },
+                quotes: {
+                    classic: ["Well done is better than well said.", "The future depends on what you do today.", "Perseverance is failing 19 times and succeeding the 20th.", "Success is no accident. It is hard work.", "Action is the foundational key to all success.", "Great things are done by a series of small things brought together.", "The only limit to our realization of tomorrow is our doubts of today.", "Don’t watch the clock; do what it does. Keep going.", "It always seems impossible until it’s done.", "Success usually comes to those who are too busy to be looking for it."],
+                    'wonder-woman': ["Only love can truly save the world.", "I will fight for those who cannot fight for themselves.", "Courage is not the absence of fear, but acting in spite of it.", "I am the man who can.", "If no one else will defend the world, then I must.", "In a world of ordinary mortals, you are a wonder.", "Be the hero you were meant to be.", "Compassion is the key to peace.", "The world of men is far from perfect, but I believe in its potential.", "You are a warrior, but also wise."],
+                    'iron-man': ["Genius. Billionaire. Playboy. Philanthropist.", "Sometimes you’ve gotta run before you can walk.", "If you’re nothing without this suit, then you shouldn’t have it.", "I am Iron Man.", "It’s not about how much we lost, it’s about how much we have left.", "You can take away my house, all my tricks and toys. One thing you can’t take away — I am Iron Man.", "Heroes are made by the paths they choose.", "If we can’t protect the world, you can be damn sure we’ll avenge it.", "The truth is, I’m not a hero. I’m a guy who’s just figured some things out.", "Sometimes you have to build the future with your own two hands."],
+                    batman: ["I wear a mask. And that mask, it’s not to hide who I am, but to create what I am.", "Endure. Master yourself. And become more than a man.", "Fear is a tool.", "A hero can be anyone.", "It’s not about being the strongest. It’s about never giving up.", "I’m whatever Gotham needs me to be.", "Criminals are a superstitious and cowardly lot.", "Even the darkest night will end, and the sun will rise.", "Justice is not vengeance.", "Training is nothing. The will is everything."]
+                },
+                mainQuotes: {
+                    classic: "Fortune favors the bold.",
+                    'wonder-woman': "You are stronger than you believe. You have greater powers than you know.",
+                    'iron-man': "Sometimes you gotta run before you can walk.",
+                    batman: "It’s not who I am underneath, but what I do that defines me."
+                },
+                achievements: {
+                    classic: { tasksCompleted: 0 }, 'wonder-woman': { tasksCompleted: 0 },
+                    'iron-man': { tasksCompleted: 0 }, batman: { tasksCompleted: 0 }
+                }
             });
-        }
-        
-        function processBulkAdd(text) {
-            const lines = text.split('\n').filter(line => line.trim() !== '');
-            if (lines.length === 0) return;
 
-            let currentSubject, currentSection, currentTopic;
+            let appState = getDefaultState();
+            
+            // Debounced save function to prevent too many writes to Firestore
+            const debounce = (func, delay) => {
+                let timeout;
+                return function(...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), delay);
+                };
+            };
 
-            lines.forEach(line => {
-                const [type, ...nameParts] = line.split(':');
-                const name = nameParts.join(':').trim();
-                if (!name) return;
+            const debouncedSave = debounce(saveStateToFirebase, 1000);
 
-                const item = { name, completed: false, collapsed: false, children: [] };
+            function saveState() {
+                debouncedSave(appState);
+            }
+
+            // --- THEME & TITLE ---
+            const mainTitleEl = document.getElementById('main-title');
+            document.getElementById('theme-switcher').addEventListener('click', (e) => {
+                const theme = e.target.dataset.theme;
+                if (theme) {
+                    const isDefault = Object.values(appState.hubTitles).includes(appState.hubTitle);
+                    appState.currentTheme = theme;
+                    if (isDefault) {
+                        appState.hubTitle = appState.hubTitles[theme];
+                    }
+                    renderAll();
+                    saveState();
+                }
+            });
+            mainTitleEl.addEventListener('blur', () => { 
+                appState.hubTitle = mainTitleEl.textContent; 
+                saveState();
+            });
+
+            // --- MODALS ---
+            const modalBackdrop = document.getElementById('modal-backdrop');
+            function openModal(modalElement) { modalBackdrop.classList.remove('hidden'); modalElement.classList.remove('hidden'); }
+            function closeModal(modalElement) { modalBackdrop.classList.add('hidden'); modalElement.classList.add('hidden'); }
+            modalBackdrop.addEventListener('click', () => {
+                document.querySelectorAll('.z-50').forEach(m => m.classList.add('hidden'));
+                modalBackdrop.classList.add('hidden');
+            });
+            
+            // --- ACHIEVEMENTS & QUOTES ---
+            const achievementsContainer = document.getElementById('achievements-container');
+            const badgeDesigns = {
+                classic: { name: "The Pillar", visual: "🏛️", tooltip: "Your discipline builds the foundation. The checklist begins with you." },
+                'wonder-woman': { name: "Amazon’s Honor", visual: "🛡️", tooltip: "Task by task, you upheld justice with the courage of Themyscira." },
+                'iron-man': { name: "Arc of Precision", visual: "⚙️", tooltip: "Like Stark, you engineered every outcome with brilliance." },
+                batman: { name: "The Shadow’s Resolve", visual: "🦇", tooltip: "You chose the shadows, and still brought light to the task." }
+            };
+
+            function renderAchievements() {
+                if (!appState.achievements || !appState.currentTheme) return;
+                const theme = appState.currentTheme;
+                const themeAchievements = appState.achievements[theme];
+                const badgeLevel = Math.floor(themeAchievements.tasksCompleted / 10);
+                const design = badgeDesigns[theme];
+
+                achievementsContainer.innerHTML = `
+                    <div class="badge-container cursor-pointer p-4 border-2 rounded-lg" style="border-color: var(--border-color);">
+                        <div class="text-5xl">${design.visual}</div>
+                        <h3 class="font-bold mt-2">${design.name} - Level ${badgeLevel}</h3>
+                        <p class="text-xs italic" style="color: var(--secondary-color);">${design.tooltip}</p>
+                    </div>
+                `;
+            }
+            
+            achievementsContainer.addEventListener('click', () => {
+                const theme = appState.currentTheme;
+                const themeAchievements = appState.achievements[theme];
+                const badgeLevel = Math.floor(themeAchievements.tasksCompleted / 10);
+                const mainQuote = appState.mainQuotes[theme];
+                const availableQuotes = appState.quotes[theme];
                 
-                switch(type.trim().toLowerCase()) {
-                    case 'subject':
-                        userData.checklist.push(item);
-                        currentSubject = item;
-                        currentSection = null;
-                        currentTopic = null;
-                        break;
-                    case 'section':
-                        if (currentSubject) {
-                            currentSubject.children.push(item);
-                            currentSection = item;
-                            currentTopic = null;
+                let quotesHTML = `<h4 class="font-bold border-b-2 pb-2" style="border-color: var(--border-color)">Main Quote</h4><p class="italic my-2">"${mainQuote}"</p>`;
+                quotesHTML += `<h4 class="font-bold border-b-2 pb-2 mt-4" style="border-color: var(--border-color)">Unlocked Quotes (Level ${badgeLevel})</h4>`;
+                
+                if (badgeLevel === 0) {
+                    quotesHTML += `<p class="mt-2" style="color: var(--secondary-color)">Complete 10 tasks in this theme to unlock the first quote!</p>`;
+                } else {
+                    for (let i = 0; i < availableQuotes.length; i++) {
+                        if (i < badgeLevel) {
+                            quotesHTML += `<p class="mt-2">"${availableQuotes[i]}"</p>`;
+                        } else {
+                            quotesHTML += `<p class="mt-2 opacity-50">"???" (Unlocks at Level ${i + 1})</p>`;
                         }
-                        break;
-                    case 'topic':
-                        if (currentSection) {
-                            currentSection.children.push(item);
-                            currentTopic = item;
+                    }
+                }
+
+                const modal = document.getElementById('quotes-modal');
+                modal.innerHTML = `
+                    <div class="overflow-y-auto pr-2">${quotesHTML}</div>
+                    <button id="close-quotes-modal" class="btn-theme mt-4 w-full py-2">Close</button>
+                `;
+                openModal(modal);
+                document.getElementById('close-quotes-modal').addEventListener('click', () => closeModal(modal), {once: true});
+            });
+
+            // --- BOOKMARK MODAL ---
+            function openBookmarkModal(dateString) {
+                const modal = document.getElementById('bookmark-modal');
+                const bookmark = appState.calendar.bookmarks[dateString] || { note: '', color: '' };
+                const rootStyle = getComputedStyle(document.body);
+                const themeColors = [
+                    rootStyle.getPropertyValue('--primary-color').trim(),
+                    rootStyle.getPropertyValue('--secondary-color').trim(),
+                    rootStyle.getPropertyValue('--accent-color').trim(),
+                    rootStyle.getPropertyValue('--danger-color').trim()
+                ];
+                let colorsHTML = themeColors.map(color => 
+                    `<button data-color="${color}" class="w-8 h-8 rounded-full" style="background-color: ${color}; border: ${bookmark.color === color ? '3px solid var(--text-color)' : '1px solid grey'}"></button>`
+                ).join('');
+
+                modal.innerHTML = `
+                    <h3 class="font-bold text-lg mb-4">Bookmark for ${dateString}</h3>
+                    <textarea id="bookmark-note-input" class="w-full p-2 border rounded mb-4 text-black" rows="3" placeholder="Add a note...">${bookmark.note}</textarea>
+                    <div class="flex justify-around mb-6">${colorsHTML}</div>
+                    <div class="flex justify-end gap-2">
+                        <button id="delete-bookmark-btn" class="bg-red-500 text-white px-4 py-2" style="border-radius: var(--button-radius)">Delete</button>
+                        <button id="save-bookmark-btn" class="btn-theme px-4 py-2">Save</button>
+                    </div>`;
+                openModal(modal);
+
+                const modalClickHandler = (e) => {
+                    const target = e.target;
+                    if (target.dataset.color) {
+                        modal.querySelectorAll('button[data-color]').forEach(b => b.style.border = '1px solid grey');
+                        target.style.border = '3px solid var(--text-color)';
+                    } else if (target.id === 'save-bookmark-btn') {
+                        const note = modal.querySelector('#bookmark-note-input').value;
+                        const selectedColorEl = modal.querySelector('button[style*="var(--text-color)"]');
+                        const selectedColor = selectedColorEl ? selectedColorEl.dataset.color : null;
+                        if (note && selectedColor) {
+                            appState.calendar.bookmarks[dateString] = { note, color: selectedColor };
+                        } else {
+                            delete appState.calendar.bookmarks[dateString];
                         }
-                        break;
-                    case 'subtopic':
-                        if (currentTopic) {
-                            currentTopic.children.push(item);
-                        }
-                        break;
+                        renderCalendar();
+                        saveState();
+                        closeModal(modal);
+                        modal.removeEventListener('click', modalClickHandler);
+                    } else if (target.id === 'delete-bookmark-btn') {
+                        delete appState.calendar.bookmarks[dateString];
+                        renderCalendar();
+                        saveState();
+                        closeModal(modal);
+                        modal.removeEventListener('click', modalClickHandler);
+                    }
+                };
+                modal.addEventListener('click', modalClickHandler);
+            }
+            
+            // --- NOTES MODAL ---
+            function openNotesModal(path) {
+                const item = findItem(path);
+                if (!item) return;
+
+                const modal = document.getElementById('notes-modal');
+                modal.dataset.path = JSON.stringify(path);
+                
+                const attachments = item.attachments || [];
+                let attachmentsHTML = attachments.map((att, index) => {
+                    let preview = '';
+                    if (att.type.startsWith('image/')) {
+                        preview = `<img src="${att.data}" class="max-h-20 rounded mt-2">`;
+                    } else if (att.type.startsWith('audio/')) {
+                        preview = `<audio controls src="${att.data}" class="w-full mt-2"></audio>`;
+                    } else if (att.type === 'youtube') {
+                        preview = `<button class="play-youtube-btn btn-outline mt-2" data-url="${att.url}">Play Video</button>`;
+                    }
+                    return `
+                        <div class="border p-2 rounded mt-2">
+                            <div class="flex justify-between items-center">
+                                <a href="${att.url || '#'}" target="_blank" class="truncate hover:underline text-theme-primary">${att.name || att.url}</a>
+                                <button class="delete-attachment-btn text-red-500" data-index="${index}">🗑️</button>
+                            </div>
+                            ${preview}
+                        </div>`;
+                }).join('');
+
+                modal.innerHTML = `
+                    <div class="flex-grow overflow-y-auto pr-2">
+                        <h3 class="font-bold text-lg mb-2">Notes for: ${item.title}</h3>
+                        <textarea id="notes-text-input" class="w-full p-2 border rounded mb-4 text-black" rows="5" placeholder="Add your notes...">${item.notes || ''}</textarea>
+                        <h4 class="font-semibold mb-2">Attachments</h4>
+                        <div id="attachments-list">${attachmentsHTML}</div>
+                    </div>
+                    <div class="flex-shrink-0 pt-4 border-t">
+                        <div class="flex items-center gap-2 mb-2">
+                            <input type="text" id="link-input" class="flex-grow p-2 border rounded text-black" placeholder="Paste Web or YouTube URL">
+                            <button id="add-link-btn" class="btn-theme p-2">Add Link</button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="file" id="file-upload" class="hidden" accept="image/*,audio/*">
+                            <button onclick="document.getElementById('file-upload').click()" class="btn-outline p-2 w-full">Attach Image/Audio</button>
+                        </div>
+                    </div>
+                    <button id="close-notes-modal" class="btn-theme mt-4 w-full py-2">Close & Save</button>
+                `;
+                openModal(modal);
+            }
+            
+            // --- YOUTUBE MODAL ---
+            function openYoutubeModal(videoId) {
+                const modal = document.getElementById('youtube-modal');
+                modal.innerHTML = `
+                    <button id="close-youtube-btn" class="absolute -top-8 right-0 text-white text-3xl">&times;</button>
+                    <div style="padding-bottom: 56.25%; position: relative; height: 0;">
+                        <iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                    </div>`;
+                openModal(modal);
+                document.getElementById('close-youtube-btn').addEventListener('click', () => closeModal(modal), { once: true });
+            }
+
+            // --- EVENT HANDLERS for MODALS ---
+            document.body.addEventListener('click', e => {
+                const notesModal = document.getElementById('notes-modal');
+                if (!notesModal.classList.contains('hidden')) {
+                    const path = JSON.parse(notesModal.dataset.path);
+                    const item = findItem(path);
+                    if (!item) return;
+
+                    if (e.target.id === 'add-link-btn') {
+                        const input = document.getElementById('link-input');
+                        const url = input.value.trim();
+                        if (!url) return;
+                        if (!item.attachments) item.attachments = [];
+                        let type = 'link';
+                        try {
+                            const urlObj = new URL(url);
+                            if (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) type = 'youtube';
+                        } catch (_) {}
+                        item.attachments.push({ type, url, name: url });
+                        openNotesModal(path);
+                        input.value = '';
+                    } else if (e.target.classList.contains('play-youtube-btn')) {
+                        const videoId = new URL(e.target.dataset.url).searchParams.get('v');
+                        if (videoId) openYoutubeModal(videoId);
+                    } else if (e.target.classList.contains('delete-attachment-btn')) {
+                        item.attachments.splice(parseInt(e.target.dataset.index, 10), 1);
+                        openNotesModal(path);
+                    } else if (e.target.id === 'close-notes-modal') {
+                        item.notes = document.getElementById('notes-text-input').value;
+                        saveState();
+                        closeModal(notesModal);
+                    }
                 }
             });
-            saveUserData().then(renderChecklist);
-        }
 
-        // --- UTILITY & OTHER FUNCTIONS ---
-        // Stubs for functions that need to be fully implemented or are placeholders
-        function getItemByPath(path) {
-            let item = { children: userData.checklist };
-            for(const index of path) {
-                if (!item || !item.children || !item.children[index]) return null;
-                item = item.children[index];
+            document.body.addEventListener('change', e => {
+                const notesModal = document.getElementById('notes-modal');
+                if (!notesModal.classList.contains('hidden') && e.target.id === 'file-upload') {
+                    const path = JSON.parse(notesModal.dataset.path);
+                    const item = findItem(path);
+                    if (!item || !e.target.files.length) return;
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        if (!item.attachments) item.attachments = [];
+                        item.attachments.push({ type: file.type, name: file.name, data: event.target.result });
+                        openNotesModal(path);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // --- CALENDAR & STOPWATCH ---
+            const calendarContainer = document.getElementById('calendar-container');
+            function renderCalendar() {
+                if(!appState.calendar) return;
+                const { displayDate, bookmarks } = appState.calendar;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                calendarContainer.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <button id="prev-month-btn" class="font-bold text-lg p-1">&lt;</button>
+                        <h3 class="font-bold text-base">${displayDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+                        <button id="next-month-btn" class="font-bold text-lg p-1">&gt;</button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold" style="color: var(--secondary-color)">
+                        <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 mt-1"></div>`;
+                const grid = document.getElementById('calendar-grid');
+                const year = displayDate.getFullYear();
+                const month = displayDate.getMonth();
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                for (let i = 0; i < firstDayOfMonth; i++) grid.innerHTML += `<div></div>`;
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const date = new Date(year, month, i);
+                    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                    const dayEl = document.createElement('div');
+                    dayEl.textContent = i;
+                    dayEl.dataset.date = dateString;
+                    dayEl.className = 'relative text-xs p-1 rounded-full cursor-pointer text-center transition-all';
+                    const bookmark = bookmarks[dateString];
+                    if (bookmark) dayEl.style.border = `2px solid ${bookmark.color}`;
+                    if (date.getTime() === today.getTime()) dayEl.classList.add('bg-theme-primary', 'text-white', 'font-bold');
+                    dayEl.addEventListener('click', () => openBookmarkModal(dateString));
+                    grid.appendChild(dayEl);
+                }
+                document.getElementById('prev-month-btn').addEventListener('click', () => { appState.calendar.displayDate.setMonth(appState.calendar.displayDate.getMonth() - 1); renderCalendar(); saveState(); });
+                document.getElementById('next-month-btn').addEventListener('click', () => { appState.calendar.displayDate.setMonth(appState.calendar.displayDate.getMonth() + 1); renderCalendar(); saveState(); });
             }
-            return item;
-        }
-        function updateParentStatus(path) { /* ... existing logic ... */ }
-        function updateAllProgressBars() { /* ... existing logic ... */ }
-        function renderGamification() { /* ... existing logic ... */ }
-        function checkBadges() { /* ... existing logic ... */ }
-        // ... all other existing functions like stopwatch, user name edit, theme switcher etc.
+
+            const stopwatchEl = document.getElementById('stopwatch');
+            const startStopBtn = document.getElementById('start-stop-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            function formatTime(ms) {
+                const s = Math.floor(ms / 1000);
+                return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+            }
+            startStopBtn.addEventListener('click', () => {
+                if (appState.stopwatch.intervalId) {
+                    clearInterval(appState.stopwatch.intervalId);
+                    appState.stopwatch.elapsedTime += Date.now() - appState.stopwatch.startTime;
+                    appState.stopwatch.intervalId = null;
+                    startStopBtn.textContent = 'Start';
+                } else {
+                    appState.stopwatch.startTime = Date.now();
+                    appState.stopwatch.intervalId = setInterval(() => {
+                        stopwatchEl.textContent = formatTime(appState.stopwatch.elapsedTime + (Date.now() - appState.stopwatch.startTime));
+                    }, 1000);
+                    startStopBtn.textContent = 'Stop';
+                }
+                saveState();
+            });
+            resetBtn.addEventListener('click', () => {
+                clearInterval(appState.stopwatch.intervalId);
+                appState.stopwatch = { startTime: 0, elapsedTime: 0, intervalId: null };
+                stopwatchEl.textContent = '00:00:00';
+                startStopBtn.textContent = 'Start';
+                saveState();
+            });
+
+            // --- CHECKLIST ---
+            const checklistContainer = document.getElementById('checklist-container');
+            const addSubjectBtn = document.getElementById('add-subject-btn');
+
+            function findItem(path) {
+                let current = { children: appState.checklist };
+                for (const id of path) {
+                    if (!current || !current.children) return null;
+                    current = current.children.find(item => item.id === id);
+                }
+                return current;
+            }
+
+            function createChecklistItem(item, level, path) {
+                const itemEl = document.createElement('div');
+                itemEl.className = `checklist-item p-2 rounded-lg ml-${level * 4} ${item.priority ? 'priority-flag' : ''}`;
+                itemEl.dataset.path = JSON.stringify(path);
+                const isParent = level < 3;
+                let progressHTML = '';
+                if (level === 0) {
+                     progressHTML = `<div class="w-full progress-bar-bg rounded-full h-2 mt-2"><div class="progress-bar-fill h-2 rounded-full" style="width: 0%;"></div></div>`;
+                }
+                itemEl.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 flex-grow min-w-0">
+                            ${isParent ? `<span class="toggle-collapse cursor-pointer">${item.collapsed ? '▶️' : '🔽'}</span>` : ''}
+                            <button class="edit-btn text-lg" title="Edit">✏️</button>
+                            <input type="checkbox" class="item-checkbox h-5 w-5 flex-shrink-0" ${item.completed ? 'checked' : ''}>
+                            <span class="item-title flex-grow truncate">${item.title}</span>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                            <button class="notes-btn text-lg" title="Notes">📝</button>
+                            ${level === 3 ? `<button class="priority-btn text-lg" title="Toggle Priority">${item.priority ? '🚩' : '🏳️'}</button>` : ''}
+                            ${isParent ? `<button class="add-child-btn text-lg" title="Add Sub-item">➕</button>` : ''}
+                            <button class="delete-btn text-lg" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                    ${progressHTML}
+                    <div class="children-container ${item.collapsed ? 'hidden' : ''} pt-2 space-y-2"></div>`;
+                if (isParent && item.children) {
+                    const childrenContainer = itemEl.querySelector('.children-container');
+                    item.children.forEach(child => {
+                        childrenContainer.appendChild(createChecklistItem(child, level + 1, [...path, child.id]));
+                    });
+                }
+                return itemEl;
+            }
+
+            function renderChecklist(searchTerm = '') {
+                const scrollState = checklistContainer.scrollTop;
+                checklistContainer.innerHTML = '';
+                let listToRender = appState.checklist;
+                if (searchTerm) {
+                    const lowerTerm = searchTerm.toLowerCase();
+                    function filter(items) {
+                        const result = [];
+                        for(const item of items) {
+                            let children = item.children ? filter(item.children) : [];
+                            if (item.title.toLowerCase().includes(lowerTerm) || children.length > 0) {
+                                result.push({ ...item, children, collapsed: false });
+                            }
+                        }
+                        return result;
+                    }
+                    listToRender = filter(appState.checklist);
+                }
+                listToRender.forEach(subject => {
+                    checklistContainer.appendChild(createChecklistItem(subject, 0, [subject.id]));
+                });
+                updateAllProgressBars();
+                checklistContainer.scrollTop = scrollState;
+            }
+
+            function updateAllProgressBars() {
+                if(!appState.checklist) return;
+                appState.checklist.forEach(subject => {
+                    const subjectEl = checklistContainer.querySelector(`[data-path='["${subject.id}"]']`);
+                    if (subjectEl) {
+                        let total = 0, completed = 0;
+                        function count(item) {
+                            if (item.children && item.children.length > 0) item.children.forEach(count);
+                            else { total++; if (item.completed) completed++; }
+                        }
+                        count(subject);
+                        const percentage = total > 0 ? (completed / total) * 100 : (subject.completed ? 100 : 0);
+                        const progressBar = subjectEl.querySelector('.progress-bar-fill');
+                        if(progressBar) progressBar.style.width = `${percentage}%`;
+                    }
+                });
+            }
+
+            function updateParentCompletion(path) {
+                if (path.length <= 1) return;
+                const parentPath = path.slice(0, -1);
+                const parent = findItem(parentPath);
+                if (parent && parent.children) {
+                    const allChildrenCompleted = parent.children.every(child => child.completed);
+                    if (parent.completed !== allChildrenCompleted) {
+                        parent.completed = allChildrenCompleted;
+                        updateParentCompletion(parentPath);
+                    }
+                }
+            }
+
+            addSubjectBtn.addEventListener('click', () => {
+                appState.checklist.push({ id: crypto.randomUUID(), title: 'New Subject', completed: false, collapsed: false, children: [] });
+                renderChecklist();
+                saveState();
+            });
+            
+            checklistContainer.addEventListener('click', e => {
+                const target = e.target;
+                const itemEl = target.closest('.checklist-item');
+                if (!itemEl) return;
+
+                const path = JSON.parse(itemEl.dataset.path);
+                const item = findItem(path);
+                if (!item) return;
+
+                let needsRender = true;
+                let needsSave = true;
+
+                if (target.closest('button')) {
+                    const button = target.closest('button');
+                    if (button.classList.contains('add-child-btn')) {
+                        if (!item.children) item.children = [];
+                        const levelNames = ['Section', 'Topic', 'Subtopic'];
+                        item.children.push({ id: crypto.randomUUID(), title: `New ${levelNames[path.length - 1]}`, completed: false, collapsed: false, children: path.length < 3 ? [] : undefined });
+                        item.collapsed = false;
+                    } else if (button.classList.contains('delete-btn')) {
+                        if (path.length === 1) {
+                            appState.checklist = appState.checklist.filter(child => child.id !== item.id);
+                        } else {
+                            let parent = findItem(path.slice(0, -1));
+                            parent.children = parent.children.filter(child => child.id !== item.id);
+                        }
+                        updateParentCompletion(path);
+                    } else if (button.classList.contains('priority-btn')) {
+                        item.priority = !item.priority;
+                    } else if (button.classList.contains('notes-btn')) {
+                        openNotesModal(path);
+                        needsRender = false;
+                        needsSave = false;
+                    } else if (button.classList.contains('edit-btn')) {
+                        const titleSpan = itemEl.querySelector('.item-title');
+                        titleSpan.setAttribute('contenteditable', 'true');
+                        titleSpan.focus();
+                        document.execCommand('selectAll', false, null);
+                        needsRender = false;
+                        needsSave = false;
+                    }
+                } else if (target.classList.contains('toggle-collapse')) {
+                    item.collapsed = !item.collapsed;
+                } else if (target.classList.contains('item-checkbox')) {
+                    let tasksChanged = 0;
+                    function toggleChildren(currentItem, checked) {
+                        if (!currentItem.children || currentItem.children.length === 0) {
+                            if (currentItem.completed !== checked) tasksChanged += checked ? 1 : -1;
+                        }
+                        currentItem.completed = checked;
+                        if (currentItem.children) currentItem.children.forEach(child => toggleChildren(child, checked));
+                    }
+                    toggleChildren(item, target.checked);
+                    if(appState.achievements[appState.currentTheme]) {
+                       appState.achievements[appState.currentTheme].tasksCompleted += tasksChanged;
+                    }
+                    updateParentCompletion(path);
+                    renderAchievements();
+                } else {
+                    needsRender = false;
+                    needsSave = false;
+                }
+
+                if (needsRender) renderChecklist();
+                if (needsSave) saveState();
+            });
+
+            checklistContainer.addEventListener('focusout', e => {
+                if (e.target.classList.contains('item-title')) {
+                    const titleSpan = e.target;
+                    titleSpan.setAttribute('contenteditable', 'false');
+                    const path = JSON.parse(titleSpan.closest('.checklist-item').dataset.path);
+                    const item = findItem(path);
+                    if (item && (titleSpan.textContent.trim() !== item.title)) {
+                         item.title = titleSpan.textContent.trim() || "Untitled";
+                         saveState();
+                    }
+                }
+            });
+
+            checklistContainer.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && e.target.classList.contains('item-title')) {
+                    e.preventDefault();
+                    e.target.blur();
+                }
+            });
+            document.getElementById('search-input').addEventListener('input', e => renderChecklist(e.target.value));
+
+            // --- BULK ADD MODAL ---
+            document.getElementById('bulk-add-btn').addEventListener('click', () => {
+                 const modal = document.getElementById('bulk-add-modal');
+                 modal.innerHTML = `
+                    <h3 class="font-bold text-lg mb-2">Bulk Add From Text</h3>
+                    <p class="text-sm mb-4" style="color: var(--secondary-color)">Indent with two spaces for hierarchy.</p>
+                    <textarea id="bulk-add-textarea" class="w-full h-64 p-2 border rounded mb-4 text-black" placeholder="Subject: New Project\n  Section: Initial Research\n    Topic: Competitor Analysis\n      Subtopic: Analyze Feature X"></textarea>
+                    <div class="flex justify-end gap-2">
+                        <button id="cancel-bulk-add" class="btn-outline">Cancel</button>
+                        <button id="process-bulk-add" class="btn-theme">Add to Checklist</button>
+                    </div>`;
+                openModal(modal);
+                document.getElementById('process-bulk-add').addEventListener('click', () => {
+                    const text = document.getElementById('bulk-add-textarea').value;
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    let pathStack = [];
+                    lines.forEach(line => {
+                        const indent = Math.floor(line.match(/^\s*/)[0].length / 2);
+                        let title = line.trim();
+                        title = title.replace(/^(Subject|Section|Topic|Subtopic):\s*/i, '');
+                        if (!title) return;
+                        const newItem = { id: crypto.randomUUID(), title, completed: false, collapsed: false };
+                        pathStack.length = indent;
+                        if (indent === 0) {
+                            newItem.children = [];
+                            appState.checklist.push(newItem);
+                            pathStack.push(appState.checklist[appState.checklist.length - 1]);
+                        } else {
+                            const parent = pathStack[indent - 1];
+                            if (parent) {
+                                if (!parent.children) parent.children = [];
+                                if (indent < 3) newItem.children = [];
+                                parent.children.push(newItem);
+                                pathStack.push(newItem);
+                            }
+                        }
+                    });
+                    renderChecklist();
+                    saveState();
+                    closeModal(modal);
+                }, { once: true });
+                document.getElementById('cancel-bulk-add').addEventListener('click', () => closeModal(modal), { once: true });
+            });
+
+            // --- RENDER ALL FUNCTION ---
+            function renderAll() {
+                document.body.className = `theme-${appState.currentTheme}`;
+                mainTitleEl.textContent = appState.hubTitle;
+                mainTitleEl.style.fontFamily = `var(--main-font)`;
+                renderCalendar();
+                renderChecklist();
+                renderAchievements();
+            }
+
+            // --- AUTHENTICATION ---
+            loginButton.addEventListener('click', () => {
+                signInWithPopup(auth, provider).catch(error => console.error("Auth Error:", error));
+            });
+            logoutButton.addEventListener('click', () => signOut(auth));
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    console.log("User logged in:", user.displayName);
+                    userInfoEl.textContent = `Hi, ${user.displayName.split(' ')[0]}`;
+
+                    const loadedState = await loadStateFromFirebase();
+                    if (loadedState) {
+                        // Merge loaded state with default state to ensure all properties exist
+                        appState = { ...getDefaultState(), ...loadedState };
+                         // Ensure nested objects are also merged correctly
+                        appState.calendar = { ...getDefaultState().calendar, ...loadedState.calendar };
+                        appState.stopwatch = { ...getDefaultState().stopwatch, ...loadedState.stopwatch };
+                        appState.achievements = { ...getDefaultState().achievements, ...loadedState.achievements };
+                    } else {
+                        appState = getDefaultState();
+                        saveState(); // Save the initial default state for the new user
+                    }
+                    
+                    loginScreen.style.display = 'none';
+                    appContainer.classList.remove('hidden');
+                    renderAll();
+
+                } else {
+                    currentUser = null;
+                    console.log("User logged out.");
+                    userInfoEl.textContent = '';
+                    appState = getDefaultState();
+
+                    loginScreen.style.display = 'flex';
+                    appContainer.classList.add('hidden');
+                }
+            });
+        });
     </script>
 </body>
 </html>
