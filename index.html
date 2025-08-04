@@ -746,6 +746,12 @@
 
         // --- FIX: More robust login handling ---
         getRedirectResult(auth)
+            .then((result) => {
+                if (result && result.user) {
+                    console.log("Login successful with redirect result:", result.user);
+                    // The onAuthStateChanged listener will handle the rest.
+                }
+            })
             .catch((error) => {
                 console.error("Error processing redirect result:", error);
                 alert(`Login failed: ${error.message}`);
