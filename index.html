@@ -256,6 +256,7 @@
                 renderCalendar();
                 renderChecklist();
                 renderAchievements();
+                stopwatchEl.textContent = formatTime(appState.stopwatch.elapsedTime);
             } catch (error) {
                 console.error("CRITICAL ERROR during renderAll:", error);
                 alert("A critical error occurred while displaying your data. Please check the console for details.");
@@ -316,7 +317,11 @@
                 dayEl.className = 'relative text-xs p-1 rounded-full cursor-pointer text-center transition-all';
                 const bookmark = bookmarks[dateString];
                 if (bookmark) dayEl.style.border = `2px solid ${bookmark.color}`;
-                if (date.getTime() === today.getTime()) dayEl.classList.add('bg-theme-primary', 'text-white', 'font-bold');
+                // --- FIX for Calendar Highlight ---
+                if (date.getTime() === today.getTime()) {
+                    dayEl.style.backgroundColor = 'var(--primary-color)';
+                    dayEl.classList.add('text-white', 'font-bold');
+                }
                 grid.appendChild(dayEl);
             }
         }
@@ -480,6 +485,11 @@
             modal.addEventListener('click', modalClickHandler);
         }
 
+        function formatTime(ms) {
+            const s = Math.floor(ms / 1000);
+            return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+        }
+
         // --- Event Listeners Setup ---
         function addEventListeners() {
             
@@ -596,7 +606,6 @@
                 }
             });
 
-            // --- FIX: Calendar Functionality ---
             calendarContainer.addEventListener('click', (e) => {
                 const target = e.target;
                 if (target.id === 'prev-month-btn') {
@@ -612,7 +621,35 @@
                 }
             });
 
-            // --- FIX: Logout Button ---
+            // --- FIX: Stopwatch Functionality ---
+            const startStopBtn = document.getElementById('start-stop-btn');
+            const resetBtn = document.getElementById('reset-btn');
+
+            startStopBtn.addEventListener('click', () => {
+                if (appState.stopwatch.intervalId) {
+                    clearInterval(appState.stopwatch.intervalId);
+                    appState.stopwatch.elapsedTime += Date.now() - appState.stopwatch.startTime;
+                    appState.stopwatch.intervalId = null;
+                    startStopBtn.textContent = 'Start';
+                } else {
+                    appState.stopwatch.startTime = Date.now();
+                    appState.stopwatch.intervalId = setInterval(() => {
+                        const totalElapsed = appState.stopwatch.elapsedTime + (Date.now() - appState.stopwatch.startTime);
+                        stopwatchEl.textContent = formatTime(totalElapsed);
+                    }, 1000);
+                    startStopBtn.textContent = 'Stop';
+                }
+                debouncedSave();
+            });
+
+            resetBtn.addEventListener('click', () => {
+                clearInterval(appState.stopwatch.intervalId);
+                appState.stopwatch = { startTime: 0, elapsedTime: 0, intervalId: null };
+                stopwatchEl.textContent = '00:00:00';
+                startStopBtn.textContent = 'Start';
+                debouncedSave();
+            });
+
             logoutButton.addEventListener('click', () => {
                 signOut(auth);
             });
