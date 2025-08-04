@@ -120,38 +120,25 @@
         };
 
         // --- Authentication Controller ---
-        // First, check if we are coming back from a Google login
-        getRedirectResult(auth)
-            .then((result) => {
-                if (result && result.user) {
-                    // This means the user just successfully logged in.
-                    // The onAuthStateChanged listener below will handle showing the UI.
-                    console.log("Login successful via redirect.");
-                } else {
-                    // This means the user just loaded the page normally.
-                    // We need to check if they are *already* logged in from a previous session.
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                            showLoggedInUI(user);
-                        } else {
-                            showLoggedOutUI();
-                        }
-                    });
-                }
-            })
-            .catch((error) => {
-                console.error("Authentication Error:", error);
-                alert("There was a problem signing in. Please try again.");
-                showLoggedOutUI();
-            });
-
-        // This listener is always active to catch sign-out events
+        // This is the single source of truth for the user's login state.
+        // It runs when the page loads and whenever the login state changes.
         onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                // If the user signs out, show the login screen.
+            if (user) {
+                // User is signed in.
+                showLoggedInUI(user);
+            } else {
+                // User is signed out.
                 showLoggedOutUI();
             }
         });
+
+        // We still call this to handle any errors that might happen during the redirect.
+        getRedirectResult(auth).catch((error) => {
+            console.error("Authentication Error:", error);
+            alert("There was a problem signing in. Please try again.");
+            showLoggedOutUI();
+        });
+
     </script>
 </body>
 </html>
