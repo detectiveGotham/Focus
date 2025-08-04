@@ -45,44 +45,47 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // Get references to the HTML elements
-        const statusDiv = document.getElementById('status');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
+        // This listener ensures the page is fully loaded before running the script
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get references to the HTML elements
+            const statusDiv = document.getElementById('status');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
 
-        // This is the core Firebase function. It listens for changes in login state.
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // If a user is logged in:
-                statusDiv.textContent = `SUCCESS! Logged in as: ${user.displayName}`;
-                statusDiv.className = 'mb-6 text-lg font-medium text-green-600';
-                loginBtn.classList.add('hidden');
-                logoutBtn.classList.remove('hidden');
-            } else {
-                // If no user is logged in:
-                statusDiv.textContent = 'Logged Out. Please log in.';
-                statusDiv.className = 'mb-6 text-lg font-medium text-red-600';
-                loginBtn.classList.remove('hidden');
-                logoutBtn.classList.add('hidden');
-            }
-        });
+            // This is the core Firebase function. It listens for changes in login state.
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // If a user is logged in:
+                    statusDiv.textContent = `SUCCESS! Logged in as: ${user.displayName}`;
+                    statusDiv.className = 'mb-6 text-lg font-medium text-green-600';
+                    loginBtn.classList.add('hidden');
+                    logoutBtn.classList.remove('hidden');
+                } else {
+                    // If no user is logged in:
+                    statusDiv.textContent = 'Logged Out. Please log in.';
+                    statusDiv.className = 'mb-6 text-lg font-medium text-red-600';
+                    loginBtn.classList.remove('hidden');
+                    logoutBtn.classList.add('hidden');
+                }
+            });
 
-        // Add click event for the Login button
-        loginBtn.addEventListener('click', () => {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    console.log("Login successful:", result.user);
-                })
-                .catch((error) => {
-                    console.error("Login Error:", error);
-                    statusDiv.textContent = `Login failed. Check console for errors.`;
+            // Add click event for the Login button
+            loginBtn.addEventListener('click', () => {
+                signInWithPopup(auth, provider)
+                    .then((result) => {
+                        console.log("Login successful:", result.user);
+                    })
+                    .catch((error) => {
+                        console.error("Login Error:", error);
+                        statusDiv.textContent = `Login failed. Check console for errors.`;
+                    });
+            });
+
+            // Add click event for the Logout button
+            logoutBtn.addEventListener('click', () => {
+                signOut(auth).catch((error) => {
+                    console.error("Logout Error:", error);
                 });
-        });
-
-        // Add click event for the Logout button
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).catch((error) => {
-                console.error("Logout Error:", error);
             });
         });
 
