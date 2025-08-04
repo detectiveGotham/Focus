@@ -266,7 +266,8 @@
         let stopwatchInterval = null; 
         let currentEditingIndices = null; 
         let currentCalendarDate = null; 
-        
+        let appInitialized = false; // Flag to ensure event listeners are set only once
+
         const defaultState = {
             displayName: '',
             mainTitle: 'Productivity Hub',
@@ -350,7 +351,10 @@
                         saveState();
                     }
                     
-                    renderFullUI();
+                    if (!appInitialized) {
+                        initializeAppUI(); // Set up all event listeners ONCE
+                    }
+                    renderFullUI(); // Re-render the UI with new data
 
                     loadingContainer.classList.replace('flex', 'hidden');
                     appContainer.classList.remove('hidden');
@@ -365,6 +369,7 @@
                 loadingContainer.classList.replace('flex', 'hidden');
                 appContainer.classList.add('hidden');
                 userInfoDiv.classList.add('hidden');
+                appInitialized = false; // Reset for next login
             }
         });
 
@@ -924,8 +929,21 @@
         }
 
         // Initialize the app once the DOM is ready
-        initializeAppUI();
-    });
+        document.addEventListener('DOMContentLoaded', () => {
+            // This is now the single entry point.
+            // It only attaches the login/logout listeners initially.
+            // The rest of the app is initialized by onAuthStateChanged.
+            loginBtn.addEventListener('click', () => {
+                signInWithPopup(auth, provider).catch(error => {
+                    console.error("Login failed:", error);
+                    alert("Login failed. Please ensure pop-ups are not blocked by your browser.");
+                });
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                signOut(auth).catch(error => console.error("Logout failed:", error));
+            });
+        });
     </script>
 </body>
 </html>
