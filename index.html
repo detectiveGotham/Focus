@@ -45,7 +45,6 @@
             border-radius: var(--button-radius); padding: 0.5rem 1rem;
         }
         .btn-outline:hover { background-color: var(--primary-color); color: var(--main-bg); }
-        /* --- FIX for Logout Button Visibility --- */
         header .btn-outline {
             color: var(--main-bg);
             border-color: var(--main-bg);
@@ -659,6 +658,86 @@
 
             logoutButton.addEventListener('click', () => {
                 signOut(auth);
+            });
+
+            // --- FIX: Achievements & Quotes Functionality ---
+            achievementsContainer.addEventListener('click', () => {
+                const theme = appState.currentTheme;
+                const themeAchievements = appState.achievements[theme];
+                const badgeLevel = Math.floor(themeAchievements.tasksCompleted / 10);
+                const mainQuote = appState.mainQuotes[theme];
+                const availableQuotes = appState.quotes[theme];
+                
+                let quotesHTML = `<h4 class="font-bold border-b-2 pb-2" style="border-color: var(--border-color)">Main Quote</h4><p class="italic my-2">"${mainQuote}"</p>`;
+                quotesHTML += `<h4 class="font-bold border-b-2 pb-2 mt-4" style="border-color: var(--border-color)">Unlocked Quotes (Level ${badgeLevel})</h4>`;
+                
+                if (badgeLevel === 0) {
+                    quotesHTML += `<p class="mt-2" style="color: var(--secondary-color)">Complete 10 tasks in this theme to unlock the first quote!</p>`;
+                } else {
+                    for (let i = 0; i < availableQuotes.length; i++) {
+                        if (i < badgeLevel) {
+                            quotesHTML += `<p class="mt-2">"${availableQuotes[i]}"</p>`;
+                        } else {
+                            quotesHTML += `<p class="mt-2 opacity-50">"???" (Unlocks at Level ${i + 1})</p>`;
+                        }
+                    }
+                }
+
+                const modal = document.getElementById('quotes-modal');
+                modal.innerHTML = `
+                    <div class="overflow-y-auto pr-2">${quotesHTML}</div>
+                    <button id="close-quotes-modal" class="btn-theme mt-4 w-full py-2">Close</button>
+                `;
+                openModal(modal);
+                document.getElementById('close-quotes-modal').addEventListener('click', () => closeModal(modal), {once: true});
+            });
+
+            // --- FIX: Bulk Add & Search Functionality ---
+            document.getElementById('bulk-add-btn').addEventListener('click', () => {
+                const modal = document.getElementById('bulk-add-modal');
+                modal.innerHTML = `
+                    <h3 class="font-bold text-lg mb-2">Bulk Add From Text</h3>
+                    <p class="text-sm mb-4" style="color: var(--secondary-color)">Indent with two spaces for hierarchy.</p>
+                    <textarea id="bulk-add-textarea" class="w-full h-64 p-2 border rounded mb-4 text-black" placeholder="Subject: New Project\n  Section: Initial Research\n    Topic: Competitor Analysis\n      Subtopic: Analyze Feature X"></textarea>
+                    <div class="flex justify-end gap-2">
+                        <button id="cancel-bulk-add" class="btn-outline">Cancel</button>
+                        <button id="process-bulk-add" class="btn-theme">Add to Checklist</button>
+                    </div>`;
+                openModal(modal);
+                document.getElementById('process-bulk-add').addEventListener('click', () => {
+                    const text = document.getElementById('bulk-add-textarea').value;
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    let pathStack = [];
+                    lines.forEach(line => {
+                        const indent = Math.floor(line.match(/^\s*/)[0].length / 2);
+                        let title = line.trim();
+                        title = title.replace(/^(Subject|Section|Topic|Subtopic):\s*/i, '');
+                        if (!title) return;
+                        const newItem = { id: crypto.randomUUID(), title, completed: false, collapsed: false };
+                        pathStack.length = indent;
+                        if (indent === 0) {
+                            newItem.children = [];
+                            appState.checklist.push(newItem);
+                            pathStack.push(appState.checklist[appState.checklist.length - 1]);
+                        } else {
+                            const parent = pathStack[indent - 1];
+                            if (parent) {
+                                if (!parent.children) parent.children = [];
+                                if (indent < 3) newItem.children = [];
+                                parent.children.push(newItem);
+                                pathStack.push(newItem);
+                            }
+                        }
+                    });
+                    renderChecklist();
+                    debouncedSave();
+                    closeModal(modal);
+                }, { once: true });
+                document.getElementById('cancel-bulk-add').addEventListener('click', () => closeModal(modal), { once: true });
+            });
+
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                renderChecklist(e.target.value);
             });
         }
 
